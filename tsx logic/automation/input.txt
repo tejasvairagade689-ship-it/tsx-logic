@@ -1,93 +1,476 @@
 ```tsx
 import React from 'react';
-import { useCurrentFrame, useVideoConfig, interpolate, Easing, AbsoluteFill } from 'remotion';
+import {
+	useCurrentFrame,
+	useVideoConfig,
+	interpolate,
+	spring,
+	AbsoluteFill,
+	Easing,
+} from 'remotion';
 
 export const compositionConfig = {
-  id: 'ClaudeOpusIntro',
-  durationInSeconds: 8,
-  fps: 30,
-  width: 1920,
-  height: 1080,
-};
-
-const COLORS = {
-  yellow: { light: '#FEF9C3', soft: '#FDE68A', medium: '#FBBF24', vibrant: '#F59E0B' },
-  blue: { light: '#DBEAFE', soft: '#93C5FD', medium: '#3B82F6', vibrant: '#2563EB' },
-  text: { dark: '#1E293B', medium: '#475569', light: '#94A3B8' },
+	id: 'Chapter2Scene1_RunningDirection',
+	durationInSeconds: 12,
+	fps: 30,
+	width: 1920,
+	height: 1080,
 };
 
 const seededRandom = (seed: number): number => {
-  const x = Math.sin(seed * 9999) * 10000;
-  return x - Math.floor(x);
+	const x = Math.sin(seed * 9999) * 10000;
+	return x - Math.floor(x);
 };
 
-const orbs = Array.from({ length: 5 }, (_, i) => ({
-  x: seededRandom(i + 1) * 100,
-  y: seededRandom(i + 10) * 100,
-  size: 150 + seededRandom(i + 20) * 300,
-  color: i % 2 === 0 ? COLORS.yellow.soft : COLORS.blue.soft,
-}));
+const Chapter2Scene1_RunningDirection: React.FC = () => {
+	const frame = useCurrentFrame();
+	const { fps, durationInFrames } = useVideoConfig();
 
-const infoItems = [
-  { emoji: '\u{1F4C5}', label: 'Kab Aaya?', value: '5 February 2026' },
-  { emoji: '\u{1F3E2}', label: 'Kisne Banaya?', value: 'Anthropic' },
-  { emoji: '\u{1F4B0}', label: 'Paisa Kiska?', value: 'Google + Amazon' },
-  { emoji: '\u{1F9E0}', label: 'Hai Kya?', value: 'Sabse Smart AI' },
-  { emoji: '\u{1F3AF}', label: 'Kiske Liye?', value: 'Doctors \u00B7 Bankers \u00B7 Lawyers' },
-  { emoji: '\u{1F3C6}', label: 'Record?', value: 'ChatGPT Ko Haara Diya!' },
-];
+	const sp = (delay: number, config?: object) =>
+		spring({
+			frame: Math.max(0, frame - delay),
+			fps,
+			config: { damping: 12, mass: 0.4, stiffness: 120, ...config },
+		});
 
-const Watermark: React.FC<{ frame: number }> = ({ frame }) => {
-  const opacity = interpolate(frame, [15, 30], [0, 0.5], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-  return (
-    <div style={{ position: 'absolute', bottom: 36, right: 50, opacity, display: 'flex', alignItems: 'center', gap: 8 }}>
-      <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS.yellow.medium }} />
-      <span style={{ fontSize: 22, fontWeight: 600, color: COLORS.text.light, letterSpacing: 3, fontFamily: 'Inter, system-ui, sans-serif' }}>kuxai.7x</span>
-    </div>
-  );
+	const exitOp = interpolate(
+		frame,
+		[durationInFrames - 15, durationInFrames],
+		[1, 0],
+		{ extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+	);
+
+	// Camera zoom in slowly
+	const cameraZoom = interpolate(frame, [0, durationInFrames], [1, 1.08], {
+		extrapolateRight: 'clamp',
+	});
+	const cameraPanX = interpolate(frame, [0, durationInFrames], [0, -20], {
+		extrapolateRight: 'clamp',
+	});
+
+	// Road/path animation - moves left to simulate running
+	const roadScroll = (frame * 4) % 400;
+
+	// Arrow cascade animation
+	const arrowCount = 7;
+
+	return (
+		<AbsoluteFill
+			style={{
+				backgroundColor: '#1C1C1C',
+				overflow: 'hidden',
+				opacity: exitOp,
+			}}
+		>
+			<div
+				style={{
+					width: '100%',
+					height: '100%',
+					transform: `scale(${cameraZoom}) translateX(${cameraPanX}px)`,
+				}}
+			>
+				{/* Dynamic gradient background */}
+				<AbsoluteFill
+					style={{
+						background: `
+							radial-gradient(ellipse at 20% 80%, rgba(233,215,0,0.12) 0%, transparent 50%),
+							radial-gradient(ellipse at 80% 20%, rgba(255,193,7,0.08) 0%, transparent 50%),
+							linear-gradient(165deg, #1C1C1C 0%, #2D2D2D 40%, #1C1C1C 100%)
+						`,
+					}}
+				/>
+
+				{/* Animated shape layers - large transparent geometric forms */}
+				{[...Array(6)].map((_, i) => {
+					const seed = seededRandom(i + 10);
+					const size = 200 + seed * 400;
+					const startX = seed * 1920;
+					const startY = seededRandom(i + 20) * 1080;
+					const drift = Math.sin(frame * 0.008 + i) * 30;
+					const rotation = frame * 0.15 * (i % 2 === 0 ? 1 : -1);
+					const scaleBreath = 1 + Math.sin(frame * 0.02 + i) * 0.05;
+					const shapes = ['circle', 'rect', 'triangle'];
+					const shape = shapes[i % 3];
+					const opacity = 0.03 + seed * 0.05;
+
+					return (
+						<div
+							key={`shape-${i}`}
+							style={{
+								position: 'absolute',
+								left: startX + drift,
+								top: startY + Math.cos(frame * 0.006 + i) * 20,
+								transform: `rotate(${rotation}deg) scale(${scaleBreath})`,
+								opacity,
+							}}
+						>
+							{shape === 'circle' && (
+								<div
+									style={{
+										width: size,
+										height: size,
+										borderRadius: '50%',
+										border: '2px solid #e9d700',
+									}}
+								/>
+							)}
+							{shape === 'rect' && (
+								<div
+									style={{
+										width: size,
+										height: size * 0.7,
+										border: '2px solid #FFC107',
+										borderRadius: 8,
+									}}
+								/>
+							)}
+							{shape === 'triangle' && (
+								<svg width={size} height={size} viewBox="0 0 100 100">
+									<polygon
+										points="50,5 95,95 5,95"
+										fill="none"
+										stroke="#e9d700"
+										strokeWidth="1"
+									/>
+								</svg>
+							)}
+						</div>
+					);
+				})}
+
+				{/* Motion texture - horizontal speed lines */}
+				{[...Array(20)].map((_, i) => {
+					const y = 50 + i * 52;
+					const lineWidth = 80 + seededRandom(i + 50) * 200;
+					const xPos =
+						((seededRandom(i + 30) * 2200 - roadScroll * (0.5 + seededRandom(i + 40) * 2)) % 2200) - 200;
+					const opacity = 0.04 + seededRandom(i + 60) * 0.06;
+
+					return (
+						<div
+							key={`line-${i}`}
+							style={{
+								position: 'absolute',
+								left: xPos,
+								top: y,
+								width: lineWidth,
+								height: 1.5,
+								backgroundColor: '#e9d700',
+								opacity,
+								borderRadius: 1,
+							}}
+						/>
+					);
+				})}
+
+				{/* Floating particles */}
+				{[...Array(30)].map((_, i) => {
+					const seed1 = seededRandom(i + 100);
+					const seed2 = seededRandom(i + 200);
+					const x = seed1 * 1920;
+					const y = seed2 * 1080;
+					const particleSize = 2 + seed1 * 4;
+					const floatY = Math.sin(frame * 0.03 + i * 0.5) * 15;
+					const floatX = Math.cos(frame * 0.02 + i * 0.3) * 10;
+					const opacity = 0.1 + Math.sin(frame * 0.05 + i) * 0.08;
+
+					return (
+						<div
+							key={`particle-${i}`}
+							style={{
+								position: 'absolute',
+								left: x + floatX,
+								top: y + floatY,
+								width: particleSize,
+								height: particleSize,
+								borderRadius: '50%',
+								backgroundColor: i % 3 === 0 ? '#e9d700' : '#FFC107',
+								opacity,
+							}}
+						/>
+					);
+				})}
+
+				{/* Running path / road at bottom */}
+				<div
+					style={{
+						position: 'absolute',
+						bottom: 0,
+						left: 0,
+						width: '100%',
+						height: 180,
+						background: 'linear-gradient(to top, #2D2D2D, transparent)',
+					}}
+				>
+					{/* Dashed road lines */}
+					{[...Array(12)].map((_, i) => {
+						const xPos = ((i * 180 - roadScroll) % 2200) - 100;
+						return (
+							<div
+								key={`dash-${i}`}
+								style={{
+									position: 'absolute',
+									bottom: 85,
+									left: xPos,
+									width: 80,
+									height: 4,
+									backgroundColor: '#e9d700',
+									opacity: 0.4,
+									borderRadius: 2,
+								}}
+							/>
+						);
+					})}
+				</div>
+
+				{/* Forward arrows cascade - "jodo, badhao, surakshit karo" */}
+				{[...Array(arrowCount)].map((_, i) => {
+					const delay = 15 + i * 12;
+					const arrowSpring = sp(delay, { damping: 14, stiffness: 100 });
+					const xPos = 200 + i * 200;
+					const arrowOpacity = interpolate(
+						arrowSpring,
+						[0, 0.5, 1],
+						[0, 0.3, 0.6],
+						{ extrapolateRight: 'clamp' }
+					);
+					const arrowScale = interpolate(arrowSpring, [0, 1], [0.3, 1], {
+						extrapolateRight: 'clamp',
+					});
+					const pulse = 1 + Math.sin(frame * 0.06 + i) * 0.05;
+
+					return (
+						<div
+							key={`arrow-${i}`}
+							style={{
+								position: 'absolute',
+								left: xPos,
+								top: 420,
+								opacity: arrowOpacity,
+								transform: `scale(${arrowScale * pulse})`,
+							}}
+						>
+							<svg width="80" height="80" viewBox="0 0 24 24">
+								<path
+									d="M5 12h14M12 5l7 7-7 7"
+									stroke="#e9d700"
+									strokeWidth="2"
+									fill="none"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								/>
+							</svg>
+						</div>
+					);
+				})}
+
+				{/* Main text - "जोड़ो, बढ़ाओ, सुरक्षित करो" */}
+				<div
+					style={{
+						position: 'absolute',
+						top: 180,
+						left: 0,
+						width: '100%',
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'center',
+					}}
+				>
+					{/* Line 1 */}
+					<div
+						style={{
+							fontFamily: 'Yantra One',
+							fontSize: 110,
+							color: '#F5F5F5',
+							fontWeight: 700,
+							transform: `translateY(${interpolate(sp(8), [0, 1], [80, 0], { extrapolateRight: 'clamp' })}px)`,
+							opacity: sp(8),
+							textShadow: '0 4px 30px rgba(233,215,0,0.3)',
+						}}
+					>
+						एक ही दिशा
+					</div>
+
+					{/* Three words staggered */}
+					<div
+						style={{
+							display: 'flex',
+							gap: 60,
+							marginTop: 40,
+						}}
+					>
+						{['जोड़ो', 'बढ़ाओ', 'सुरक्षित करो'].map((word, idx) => {
+							const wordDelay = 30 + idx * 20;
+							const wordSpring = sp(wordDelay, { damping: 10, stiffness: 150 });
+							const wordScale = interpolate(wordSpring, [0, 1], [0, 1], {
+								extrapolateRight: 'clamp',
+							});
+							const wordY = interpolate(wordSpring, [0, 1], [60, 0], {
+								extrapolateRight: 'clamp',
+							});
+
+							return (
+								<div
+									key={`word-${idx}`}
+									style={{
+										fontFamily: 'Noto Sans Devanagari',
+										fontSize: 72,
+										fontWeight: 800,
+										color: '#e9d700',
+										transform: `scale(${wordScale}) translateY(${wordY}px)`,
+										opacity: wordSpring,
+										padding: '10px 30px',
+										border: '3px solid rgba(233,215,0,0.4)',
+										borderRadius: 16,
+										backgroundColor: 'rgba(233,215,0,0.06)',
+									}}
+								>
+									{word}
+								</div>
+							);
+						})}
+					</div>
+
+					{/* Subtext */}
+					<div
+						style={{
+							fontFamily: 'Noto Sans Devanagari',
+							fontSize: 48,
+							color: '#9E9E9E',
+							marginTop: 50,
+							opacity: sp(90),
+							transform: `translateY(${interpolate(sp(90), [0, 1], [30, 0], { extrapolateRight: 'clamp' })}px)`,
+						}}
+					>
+						ये सोच एक उम्र तक बिलकुल ठीक है ✓
+					</div>
+				</div>
+
+				{/* Stick figure running */}
+				<div
+					style={{
+						position: 'absolute',
+						bottom: 160,
+						left: interpolate(sp(40), [0, 1], [-100, 300], {
+							extrapolateRight: 'clamp',
+						}),
+						transform: `translateY(${Math.sin(frame * 0.15) * 8}px)`,
+						opacity: sp(40),
+					}}
+				>
+					<svg width="120" height="160" viewBox="0 0 120 160">
+						{/* Golden glow */}
+						<circle cx="60" cy="35" r="40" fill="rgba(255,193,7,0.08)" />
+						{/* Head */}
+						<circle
+							cx="60"
+							cy="30"
+							r="18"
+							fill="none"
+							stroke="#F5F5F5"
+							strokeWidth="3"
+						/>
+						{/* Glasses */}
+						<ellipse
+							cx="52"
+							cy="28"
+							rx="8"
+							ry="6"
+							fill="none"
+							stroke="#FFC107"
+							strokeWidth="2"
+						/>
+						<ellipse
+							cx="68"
+							cy="28"
+							rx="8"
+							ry="6"
+							fill="none"
+							stroke="#FFC107"
+							strokeWidth="2"
+						/>
+						<line x1="60" y1="28" x2="60" y2="28" stroke="#FFC107" strokeWidth="2" />
+						{/* Body */}
+						<line x1="60" y1="48" x2="60" y2="100" stroke="#F5F5F5" strokeWidth="3" />
+						{/* Running legs */}
+						<line
+							x1="60"
+							y1="100"
+							x2={60 + Math.sin(frame * 0.2) * 25}
+							y2="145"
+							stroke="#F5F5F5"
+							strokeWidth="3"
+						/>
+						<line
+							x1="60"
+							y1="100"
+							x2={60 - Math.sin(frame * 0.2) * 25}
+							y2="145"
+							stroke="#F5F5F5"
+							strokeWidth="3"
+						/>
+						{/* Running arms */}
+						<line
+							x1="60"
+							y1="65"
+							x2={60 - Math.sin(frame * 0.2) * 20}
+							y2="90"
+							stroke="#F5F5F5"
+							strokeWidth="3"
+						/>
+						<line
+							x1="60"
+							y1="65"
+							x2={60 + Math.sin(frame * 0.2) * 20}
+							y2="90"
+							stroke="#F5F5F5"
+							strokeWidth="3"
+						/>
+						{/* Briefcase in hand */}
+						<rect
+							x={60 + Math.sin(frame * 0.2) * 20 - 8}
+							y="85"
+							width="16"
+							height="12"
+							fill="none"
+							stroke="#FFC107"
+							strokeWidth="2"
+							rx="2"
+						/>
+					</svg>
+				</div>
+
+				{/* Vignette overlay */}
+				<AbsoluteFill
+					style={{
+						background:
+							'radial-gradient(ellipse at center, transparent 40%, rgba(28,28,28,0.7) 100%)',
+						pointerEvents: 'none',
+					}}
+				/>
+
+				{/* Watermark */}
+				<div
+					style={{
+						position: 'absolute',
+						bottom: 30,
+						right: 45,
+						fontFamily: 'Inter',
+						fontSize: 22,
+						fontWeight: 600,
+						color: '#9E9E9E',
+						opacity: interpolate(frame, [0, 30], [0, 0.3], {
+							extrapolateRight: 'clamp',
+						}),
+					}}
+				>
+					ProBuffet HQ
+				</div>
+			</div>
+		</AbsoluteFill>
+	);
 };
 
-const ClaudeOpusIntro: React.FC = () => {
-  const frame = useCurrentFrame();
-  const titleOpacity = interpolate(frame, [5, 25], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
-  const titleY = interpolate(frame, [5, 25], [30, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
-  const titleBlur = interpolate(frame, [5, 25], [10, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
-  const subtitleOpacity = interpolate(frame, [20, 38], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
-  const subtitleY = interpolate(frame, [20, 38], [20, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
-
-  return (
-    <AbsoluteFill style={{ background: 'linear-gradient(150deg, #FEFCE8 0%, #F8FAFC 40%, #DBEAFE 100%)', fontFamily: 'Inter, SF Pro Display, system-ui, sans-serif', overflow: 'hidden' }}>
-      {orbs.map((orb, i) => {
-        const floatY = Math.sin((frame + i * 80) * 0.025) * 12;
-        const floatX = Math.cos((frame + i * 60) * 0.018) * 8;
-        return (<div key={i} style={{ position: 'absolute', left: orb.x+'%', top: orb.y+'%', width: orb.size, height: orb.size, borderRadius: '50%', background: orb.color, opacity: 0.3, filter: 'blur(60px)', transform: 'translate('+floatX+'px, '+floatY+'px)' }} />);
-      })}
-      <div style={{ position: 'absolute', top: '8%', left: '50%', transform: 'translate(-50%, '+titleY+'px)', opacity: titleOpacity, filter: 'blur('+titleBlur+'px)', textAlign: 'center' }}>
-        <div style={{ fontSize: 82, fontWeight: 800, color: COLORS.text.dark, letterSpacing: -3, margin: 0 }}>CLAUDE OPUS 4.6</div>
-      </div>
-      <div style={{ position: 'absolute', top: '18%', left: '50%', transform: 'translate(-50%, '+subtitleY+'px)', opacity: subtitleOpacity, textAlign: 'center' }}>
-        <span style={{ fontSize: 32, fontWeight: 600, color: COLORS.yellow.vibrant, letterSpacing: 1 }}>AI Ka Naya King</span>
-      </div>
-      <div style={{ position: 'absolute', top: '28%', left: '50%', transform: 'translateX(-50%)', width: '85%', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {infoItems.map((item, index) => {
-          const startFrame = 35 + index * 8;
-          const itemOpacity = interpolate(frame, [startFrame, startFrame + 18], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
-          const itemY = interpolate(frame, [startFrame, startFrame + 18], [30, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
-          const itemScale = interpolate(frame, [startFrame, startFrame + 18], [0.95, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.back(1.3)) });
-          return (
-            <div key={index} style={{ opacity: itemOpacity, transform: 'translateY('+itemY+'px) scale('+itemScale+')', background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderRadius: 20, padding: '18px 36px', display: 'flex', alignItems: 'center', gap: 24, border: '1px solid rgba(255,255,255,0.7)', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
-              <div style={{ width: 56, height: 56, borderRadius: 14, background: index % 2 === 0 ? 'rgba(251,191,36,0.12)' : 'rgba(59,130,246,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>{item.emoji}</div>
-              <div style={{ fontSize: 22, fontWeight: 500, color: COLORS.text.light, width: 180, flexShrink: 0 }}>{item.label}</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: COLORS.text.dark }}>{item.value}</div>
-            </div>
-          );
-        })}
-      </div>
-      <Watermark frame={frame} />
-    </AbsoluteFill>
-  );
-};
-
-export default ClaudeOpusIntro;
+export default Chapter2Scene1_RunningDirection;
 ```
 
