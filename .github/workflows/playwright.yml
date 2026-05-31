@@ -9,14 +9,33 @@ on:
 
 jobs:
   generate-videos:
-    timeout-minutes: 10
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.45.0-jammy
     steps:
-    - name: Diagnostic Step
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
       run: |
-        echo "=== SHOWING PRE-INSTALLED BROWSERS ==="
-        ls -la /ms-playwright
-        echo "=== SHOWING PLAYWRIGHT VERSION IN DOCKER ==="
-        npx playwright --version
+        cd "tsx logic"
+        npm install
+
+    - name: Install Playwright Chromium (browser only)
+      run: |
+        cd "tsx logic"
+        npx playwright install chromium
+
+    - name: Run TSX to Video Automation
+      run: |
+        cd "tsx logic"
+        xvfb-run --server-args="-screen 0 1920x1080x24 -ac" --auto-servernum -- node automation/recorder.js
+
+    - name: Upload Generated Videos
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: generated-videos
+        path: tsx logic/downloads/
+        retention-days: 1
+        if-no-files-found: warn
