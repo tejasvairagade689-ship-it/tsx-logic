@@ -4,8 +4,8 @@ import React from 'react';
 import { useCurrentFrame, useVideoConfig, interpolate, Easing, spring, AbsoluteFill } from 'remotion';
 
 export const compositionConfig = {
-  id: 'Scene01_CoupleReveil',
-  durationInSeconds: 18,
+  id: 'Scene01_KitchenBurden',
+  durationInSeconds: 27,
   fps: 30,
   width: 1920,
   height: 1080,
@@ -16,7 +16,7 @@ const seededRandom = (seed: number): number => {
   return x - Math.floor(x);
 };
 
-const Scene01_CoupleReveil: React.FC = () => {
+const Scene01_KitchenBurden: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
 
@@ -27,224 +27,233 @@ const Scene01_CoupleReveil: React.FC = () => {
     extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
   });
 
-  // Camera slow zoom
-  const camZoom = interpolate(frame, [0, durationInFrames], [1, 1.08]);
+  const gradShift = interpolate(frame, [0, durationInFrames], [0, 30]);
+  const cameraZoom = interpolate(frame, [0, durationInFrames], [1, 1.08]);
 
-  // Headline reveal
-  const head1 = sp(10);
-  const head2 = sp(30);
-  const tagline = sp(70);
+  const title1Op = sp(20);
+  const title2Op = sp(50);
+  const title3Op = sp(85);
+  const lineExpand = interpolate(sp(110), [0, 1], [0, 100]);
+  const subOp = sp(140);
 
-  // Year stamp reveal
-  const yearScale = sp(100, { damping: 8, stiffness: 100 });
-
-  // Bottom strip
-  const stripIn = sp(140);
-
-  // 20 ANS counter
-  const counterRaw = interpolate(frame, [180, 260], [0, 20], { extrapolateRight: 'clamp' });
-  const counter = Math.floor(counterRaw);
-
-  // Final stamp
-  const stampIn = sp(330, { damping: 9, stiffness: 90 });
+  const breath = Math.sin(frame * 0.04) * 4;
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#F4CE14', overflow: 'hidden', opacity: exitOp }}>
-      {/* Gradient overlay */}
-      <AbsoluteFill style={{
-        background: 'radial-gradient(circle at 30% 20%, rgba(251,245,167,0.6) 0%, transparent 55%), radial-gradient(circle at 80% 90%, rgba(30,32,34,0.25) 0%, transparent 50%)',
-      }} />
+    <AbsoluteFill style={{ backgroundColor: '#635985', overflow: 'hidden', opacity: exitOp }}>
+      {/* Dynamic Gradient Background */}
+      <AbsoluteFill
+        style={{
+          background: `radial-gradient(circle at ${30 + gradShift}% ${40 + gradShift / 2}%, #7B6FA8 0%, #635985 45%, #443C5C 100%)`,
+        }}
+      />
 
-      {/* Shape Layers */}
-      <div style={{
-        position: 'absolute', top: '-10%', left: '-8%',
-        width: 600, height: 600, borderRadius: '50%',
-        background: '#1E2022', opacity: 0.05,
-        transform: `rotate(${frame * 0.15}deg) scale(${1 + Math.sin(frame * 0.02) * 0.05})`,
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '-12%', right: '-6%',
-        width: 700, height: 700,
-        background: '#1E2022', opacity: 0.04,
-        transform: `rotate(${-frame * 0.1}deg)`,
-        clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-      }} />
-      <div style={{
-        position: 'absolute', top: '40%', right: '12%',
-        width: 280, height: 280,
-        background: '#1E2022', opacity: 0.06,
-        transform: `rotate(${frame * 0.3}deg)`,
-      }} />
-
-      {/* Grid texture */}
-      <svg width="1920" height="1080" style={{ position: 'absolute', opacity: 0.08 }}>
-        <defs>
-          <pattern id="grid1" width="80" height="80" patternUnits="userSpaceOnUse">
-            <path d="M 80 0 L 0 0 0 80" fill="none" stroke="#1E2022" strokeWidth="1" />
-          </pattern>
-        </defs>
-        <rect width="1920" height="1080" fill="url(#grid1)" />
-      </svg>
-
-      {/* Floating particles */}
-      {Array.from({ length: 24 }).map((_, i) => {
-        const x = seededRandom(i + 1) * 1920;
-        const y = seededRandom(i + 50) * 1080;
-        const size = 4 + seededRandom(i + 100) * 8;
-        const drift = Math.sin((frame + i * 20) * 0.02) * 25;
+      {/* Shape Layer — Large drifting circles */}
+      {[0, 1, 2, 3].map((i) => {
+        const seed = seededRandom(i + 1);
+        const x = 200 + seed * 1500 + Math.sin(frame * 0.008 + i) * 60;
+        const y = 150 + seededRandom(i + 7) * 700 + Math.cos(frame * 0.01 + i) * 40;
+        const size = 320 + seed * 280;
+        const rot = frame * 0.15 + i * 45;
         return (
-          <div key={i} style={{
-            position: 'absolute',
-            left: x + drift,
-            top: y + Math.cos((frame + i * 15) * 0.02) * 20,
-            width: size, height: size, borderRadius: '50%',
-            background: i % 2 === 0 ? '#1E2022' : '#FBF5A7',
-            opacity: 0.4,
-          }} />
+          <div
+            key={`shape-${i}`}
+            style={{
+              position: 'absolute',
+              left: x,
+              top: y,
+              width: size,
+              height: size,
+              borderRadius: i % 2 === 0 ? '50%' : '20%',
+              border: `2px solid #B9F3FC`,
+              opacity: 0.06,
+              transform: `rotate(${rot}deg) scale(${1 + Math.sin(frame * 0.02 + i) * 0.05})`,
+            }}
+          />
         );
       })}
 
-      {/* MAIN CONTENT */}
-      <AbsoluteFill style={{ transform: `scale(${camZoom})`, transformOrigin: 'center center' }}>
+      {/* Motion Texture — vertical grid lines */}
+      <AbsoluteFill style={{ opacity: 0.05 }}>
+        {Array.from({ length: 20 }).map((_, i) => (
+          <div
+            key={`grid-${i}`}
+            style={{
+              position: 'absolute',
+              left: `${i * 5}%`,
+              top: 0,
+              width: 1,
+              height: '100%',
+              backgroundColor: '#B9F3FC',
+            }}
+          />
+        ))}
+      </AbsoluteFill>
 
-        {/* Top label */}
-        <div style={{
-          position: 'absolute', top: 80, left: 100,
-          opacity: head1, transform: `translateX(${(1 - head1) * -50}px)`,
-          display: 'flex', alignItems: 'center', gap: 20,
-        }}>
-          <div style={{ width: 60, height: 4, background: '#1E2022' }} />
-          <div style={{
-            fontFamily: 'Bricolage Grotesque, sans-serif',
-            fontSize: 28, fontWeight: 600, color: '#1E2022',
-            letterSpacing: 4, textTransform: 'uppercase',
-          }}>
-            Histoire Vraie · 2026
-          </div>
+      {/* Floating Particles */}
+      {Array.from({ length: 35 }).map((_, i) => {
+        const seed = seededRandom(i + 50);
+        const x = seed * 1920;
+        const y = (seededRandom(i + 200) * 1080 + frame * 0.5) % 1080;
+        const size = 2 + seededRandom(i + 300) * 4;
+        return (
+          <div
+            key={`p-${i}`}
+            style={{
+              position: 'absolute',
+              left: x,
+              top: y,
+              width: size,
+              height: size,
+              borderRadius: '50%',
+              backgroundColor: '#FE7F2D',
+              opacity: 0.3 + seededRandom(i + 400) * 0.4,
+            }}
+          />
+        );
+      })}
+
+      {/* Main Camera Container */}
+      <AbsoluteFill
+        style={{
+          transform: `scale(${cameraZoom}) translateY(${breath}px)`,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {/* Top Tag */}
+        <div
+          style={{
+            opacity: title1Op,
+            transform: `translateY(${(1 - title1Op) * 30}px)`,
+            backgroundColor: '#FE7F2D',
+            color: '#1C1C1C',
+            fontFamily: 'Inter, Poppins',
+            fontSize: 36,
+            fontWeight: 800,
+            padding: '14px 36px',
+            borderRadius: 4,
+            letterSpacing: 4,
+            marginBottom: 50,
+          }}
+        >
+          EPISODE 01 — रसोई का सच
         </div>
 
-        {/* HERO Headline */}
-        <div style={{
-          position: 'absolute', top: 200, left: 100, right: 100,
-          opacity: head2,
-        }}>
-          <div style={{
-            fontFamily: 'Clash Display, sans-serif',
-            fontSize: 180, fontWeight: 800, color: '#1E2022',
-            lineHeight: 0.95, letterSpacing: -4,
-            transform: `translateY(${(1 - head2) * 40}px)`,
-          }}>
-            UN COUPLE.
-          </div>
-          <div style={{
-            fontFamily: 'Clash Display, sans-serif',
-            fontSize: 180, fontWeight: 800, color: '#1E2022',
-            lineHeight: 0.95, letterSpacing: -4,
-            transform: `translateY(${(1 - head2) * 60}px)`,
-            marginTop: -10,
-          }}>
-            UN <span style={{
-              background: '#1E2022', color: '#FBF5A7',
-              padding: '0 24px', borderRadius: 8,
-            }}>PLAN</span>.
-          </div>
-        </div>
-
-        {/* Tagline */}
-        <div style={{
-          position: 'absolute', top: 600, left: 100,
-          opacity: tagline,
-          transform: `translateY(${(1 - tagline) * 30}px)`,
-          fontFamily: 'Montserrat, sans-serif',
-          fontSize: 44, fontWeight: 500, color: '#1E2022',
-          maxWidth: 1200, lineHeight: 1.3,
-        }}>
-          La cinquantaine bien tassée. Une vie de travail.<br/>
-          Tout semblait <em style={{ fontFamily: 'Bricolage Grotesque', fontWeight: 700 }}>parfaitement</em> calculé.
-        </div>
-
-        {/* 20 ANS counter card */}
-        <div style={{
-          position: 'absolute', top: 780, left: 100,
-          opacity: stripIn,
-          transform: `translateY(${(1 - stripIn) * 40}px) scale(${yearScale})`,
-          display: 'flex', alignItems: 'center', gap: 30,
-          background: '#1E2022', padding: '28px 50px', borderRadius: 16,
-          boxShadow: '0 20px 50px rgba(30,32,34,0.3)',
-        }}>
-          {/* Building icon SVG */}
-          <svg width="80" height="80" viewBox="0 0 80 80">
-            <rect x="15" y="20" width="50" height="55" fill="#FBF5A7" rx="2" />
-            <rect x="22" y="28" width="8" height="8" fill="#1E2022" />
-            <rect x="36" y="28" width="8" height="8" fill="#1E2022" />
-            <rect x="50" y="28" width="8" height="8" fill="#1E2022" />
-            <rect x="22" y="42" width="8" height="8" fill="#1E2022" />
-            <rect x="36" y="42" width="8" height="8" fill="#1E2022" />
-            <rect x="50" y="42" width="8" height="8" fill="#1E2022" />
-            <rect x="22" y="56" width="8" height="8" fill="#1E2022" />
-            <rect x="36" y="56" width="8" height="19" fill="#F4CE14" />
-            <rect x="50" y="56" width="8" height="8" fill="#1E2022" />
-            <polygon points="10,20 70,20 40,5" fill="#FBF5A7" />
+        {/* SVG Kitchen Bowl Icon */}
+        <div style={{ opacity: title2Op, transform: `scale(${title2Op})`, marginBottom: 40 }}>
+          <svg width="180" height="180" viewBox="0 0 200 200">
+            <defs>
+              <linearGradient id="bowlGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#B9F3FC" />
+                <stop offset="100%" stopColor="#FE7F2D" />
+              </linearGradient>
+            </defs>
+            {/* Steam */}
+            <path
+              d={`M70 ${50 + Math.sin(frame * 0.1) * 5} Q80 ${30 + Math.sin(frame * 0.1) * 8} 75 10`}
+              stroke="#B9F3FC"
+              strokeWidth="3"
+              fill="none"
+              opacity="0.6"
+            />
+            <path
+              d={`M100 ${45 + Math.sin(frame * 0.1 + 1) * 5} Q110 ${25 + Math.sin(frame * 0.1 + 1) * 8} 105 5`}
+              stroke="#B9F3FC"
+              strokeWidth="3"
+              fill="none"
+              opacity="0.6"
+            />
+            <path
+              d={`M130 ${50 + Math.sin(frame * 0.1 + 2) * 5} Q140 ${30 + Math.sin(frame * 0.1 + 2) * 8} 135 10`}
+              stroke="#B9F3FC"
+              strokeWidth="3"
+              fill="none"
+              opacity="0.6"
+            />
+            {/* Bowl */}
+            <path d="M40 90 Q100 180 160 90 Z" fill="url(#bowlGrad)" />
+            <ellipse cx="100" cy="90" rx="60" ry="10" fill="#1C1C1C" opacity="0.3" />
+            <ellipse cx="100" cy="88" rx="60" ry="8" fill="#FE7F2D" opacity="0.5" />
           </svg>
-
-          <div>
-            <div style={{
-              fontFamily: 'Space Mono, monospace',
-              fontSize: 96, fontWeight: 700, color: '#F4CE14',
-              lineHeight: 1, letterSpacing: -2,
-            }}>
-              {counter} ANS
-            </div>
-            <div style={{
-              fontFamily: 'Montserrat, sans-serif',
-              fontSize: 26, fontWeight: 500, color: '#FBF5A7',
-              letterSpacing: 2, textTransform: 'uppercase', marginTop: 4,
-            }}>
-              Un appartement · Mis en location
-            </div>
-          </div>
         </div>
 
-        {/* Right side vertical accent */}
-        <div style={{
-          position: 'absolute', top: 200, right: 80,
-          opacity: stampIn,
-          transform: `rotate(8deg) scale(${stampIn})`,
-        }}>
-          <div style={{
-            border: '6px solid #1E2022',
-            padding: '20px 40px',
-            fontFamily: 'Anton, sans-serif',
-            fontSize: 72, color: '#1E2022',
-            letterSpacing: 2, lineHeight: 1,
-            background: 'rgba(251,245,167,0.4)',
-          }}>
-            « TOUT<br/>PLANIFIÉ »
-          </div>
+        {/* Main Hero Headline */}
+        <div
+          style={{
+            opacity: title3Op,
+            transform: `translateY(${(1 - title3Op) * 40}px) scale(${title3Op})`,
+            fontFamily: 'Yantra One',
+            fontSize: 187,
+            fontWeight: 900,
+            color: '#B9F3FC',
+            lineHeight: 0.95,
+            textAlign: 'center',
+            textShadow: '0 0 40px rgba(185, 243, 252, 0.3)',
+          }}
+        >
+          रसोई का बोझ
         </div>
 
+        {/* Expanding Line */}
+        <div
+          style={{
+            width: `${lineExpand}%`,
+            maxWidth: 600,
+            height: 6,
+            backgroundColor: '#FE7F2D',
+            marginTop: 30,
+            marginBottom: 30,
+            boxShadow: '0 0 20px #FE7F2D',
+          }}
+        />
+
+        {/* Subheadline */}
+        <div
+          style={{
+            opacity: subOp,
+            transform: `translateY(${(1 - subOp) * 20}px)`,
+            fontFamily: 'Noto Sans Devanagari',
+            fontSize: 51,
+            fontWeight: 600,
+            color: '#F5F5F5',
+            textAlign: 'center',
+            letterSpacing: 1,
+          }}
+        >
+          वही दाल · वही चावल · वही रोटी
+        </div>
       </AbsoluteFill>
 
       {/* Vignette */}
-      <AbsoluteFill style={{
-        boxShadow: 'inset 0 0 250px rgba(30,32,34,0.4)',
-        pointerEvents: 'none',
-      }} />
+      <AbsoluteFill
+        style={{
+          background: 'radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.55) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
 
       {/* Watermark */}
-      <div style={{
-        position: 'absolute', bottom: 30, right: 45,
-        fontFamily: 'Montserrat, sans-serif',
-        fontSize: 22, fontWeight: 600, color: '#1E2022',
-        opacity: 0.4, letterSpacing: 1,
-      }}>
-        Matures Finance
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 30,
+          right: 45,
+          fontFamily: 'Inter',
+          fontSize: 22,
+          fontWeight: 600,
+          color: '#9E9E9E',
+          opacity: 0.3,
+        }}
+      >
+        ProBuffet HQ
       </div>
     </AbsoluteFill>
   );
 };
 
-export default Scene01_CoupleReveil;
+export default Scene01_KitchenBurden;
 ```
 
 ```tsx
@@ -253,8 +262,8 @@ import React from 'react';
 import { useCurrentFrame, useVideoConfig, interpolate, Easing, spring, AbsoluteFill } from 'remotion';
 
 export const compositionConfig = {
-  id: 'Scene02_CourrierG',
-  durationInSeconds: 18,
+  id: 'Scene02_EmptyWallet',
+  durationInSeconds: 27,
   fps: 30,
   width: 1920,
   height: 1080,
@@ -265,7 +274,7 @@ const seededRandom = (seed: number): number => {
   return x - Math.floor(x);
 };
 
-const Scene02_CourrierG: React.FC = () => {
+const Scene02_EmptyWallet: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
 
@@ -276,258 +285,231 @@ const Scene02_CourrierG: React.FC = () => {
     extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
   });
 
-  const dateIn = sp(10);
-  const envelopeIn = sp(40, { damping: 10, stiffness: 100 });
-  const letterIn = sp(110, { damping: 11, stiffness: 90 });
-  const stamp = sp(200, { damping: 6, stiffness: 80 });
-
-  // shake on stamp
-  const shakeFrame = Math.max(0, frame - 200);
-  const shake = shakeFrame < 20 ? Math.sin(shakeFrame * 2) * (20 - shakeFrame) * 0.6 : 0;
-
-  const verdictIn = sp(260);
-  const plusDuTout = sp(340, { damping: 8, stiffness: 110 });
+  const panX = interpolate(frame, [0, durationInFrames], [-30, 30]);
+  const walletDrop = sp(15, { damping: 8 });
+  const coinsOp = sp(60);
+  const counterStart = sp(90);
+  const counterValue = interpolate(sp(95), [0, 1], [30000, 0]);
+  const introOp = sp(180);
+  const nameOp = sp(220);
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#F4CE14', overflow: 'hidden', opacity: exitOp }}>
-      {/* Gradient */}
-      <AbsoluteFill style={{
-        background: 'linear-gradient(135deg, rgba(244,206,20,1) 0%, rgba(251,245,167,0.7) 100%)',
-      }} />
+    <AbsoluteFill style={{ backgroundColor: '#635985', overflow: 'hidden', opacity: exitOp }}>
+      {/* Gradient Background */}
+      <AbsoluteFill
+        style={{
+          background: 'linear-gradient(135deg, #4A4068 0%, #635985 50%, #7B6FA8 100%)',
+        }}
+      />
 
-      {/* Shape layers */}
-      <div style={{
-        position: 'absolute', top: '10%', right: '-5%',
-        width: 500, height: 500, borderRadius: '50%',
-        background: '#1E2022', opacity: 0.05,
-        transform: `scale(${1 + Math.sin(frame * 0.03) * 0.08})`,
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '-10%', left: '-5%',
-        width: 600, height: 600,
-        background: '#1E2022', opacity: 0.04,
-        transform: `rotate(${frame * 0.2}deg)`,
-        clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)',
-      }} />
-
-      {/* Diagonal lines texture */}
-      <svg width="1920" height="1080" style={{ position: 'absolute', opacity: 0.06 }}>
-        <defs>
-          <pattern id="diag" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-            <line x1="0" y1="0" x2="0" y2="40" stroke="#1E2022" strokeWidth="2" />
-          </pattern>
-        </defs>
-        <rect width="1920" height="1080" fill="url(#diag)" />
-      </svg>
-
-      {/* Particles */}
-      {Array.from({ length: 18 }).map((_, i) => {
-        const x = seededRandom(i + 5) * 1920;
-        const y = seededRandom(i + 80) * 1080;
-        return (
-          <div key={i} style={{
+      {/* Shape Layer — Triangles */}
+      {[0, 1, 2].map((i) => (
+        <div
+          key={`tri-${i}`}
+          style={{
             position: 'absolute',
-            left: x + Math.sin((frame + i * 25) * 0.025) * 30,
-            top: y + Math.cos((frame + i * 18) * 0.025) * 25,
-            width: 6, height: 6, borderRadius: '50%',
-            background: '#1E2022', opacity: 0.3,
-          }} />
+            left: 200 + i * 600,
+            top: 100 + i * 200,
+            width: 0,
+            height: 0,
+            borderLeft: '200px solid transparent',
+            borderRight: '200px solid transparent',
+            borderBottom: `350px solid #FE7F2D`,
+            opacity: 0.05,
+            transform: `rotate(${frame * 0.1 + i * 60}deg)`,
+          }}
+        />
+      ))}
+
+      {/* Texture — Diagonal lines */}
+      <AbsoluteFill style={{ opacity: 0.04 }}>
+        {Array.from({ length: 30 }).map((_, i) => (
+          <div
+            key={`line-${i}`}
+            style={{
+              position: 'absolute',
+              top: i * 60 - 200,
+              left: 0,
+              width: '150%',
+              height: 1,
+              backgroundColor: '#B9F3FC',
+              transform: 'rotate(-15deg)',
+              transformOrigin: 'left',
+            }}
+          />
+        ))}
+      </AbsoluteFill>
+
+      {/* Falling Coin Particles */}
+      {Array.from({ length: 18 }).map((_, i) => {
+        const seed = seededRandom(i + 90);
+        const startX = 800 + seed * 400;
+        const y = ((frame * 6 + i * 40) % 1200) - 100;
+        const op = coinsOp * (1 - y / 1200);
+        return (
+          <div
+            key={`coin-${i}`}
+            style={{
+              position: 'absolute',
+              left: startX,
+              top: y,
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+              backgroundColor: '#FE7F2D',
+              border: '2px solid #B9F3FC',
+              opacity: op * 0.7,
+              transform: `rotateY(${frame * 5 + i * 20}deg)`,
+            }}
+          />
         );
       })}
 
-      {/* Top date stamp */}
-      <div style={{
-        position: 'absolute', top: 70, left: 100,
-        opacity: dateIn,
-        transform: `translateX(${(1 - dateIn) * -40}px)`,
-        display: 'flex', alignItems: 'center', gap: 20,
-      }}>
-        <div style={{
-          background: '#1E2022', color: '#F4CE14',
-          fontFamily: 'Space Mono, monospace', fontSize: 26, fontWeight: 700,
-          padding: '10px 20px', letterSpacing: 3,
-        }}>
-          JANVIER · 2026
-        </div>
-        <div style={{
-          fontFamily: 'Bricolage Grotesque, sans-serif',
-          fontSize: 24, color: '#1E2022', fontWeight: 600,
-          letterSpacing: 2, textTransform: 'uppercase',
-        }}>
-          Un matin ordinaire...
-        </div>
-      </div>
+      {/* Main Composition — Split layout */}
+      <AbsoluteFill style={{ transform: `translateX(${panX}px)`, display: 'flex' }}>
+        {/* LEFT — Wallet Visual */}
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: walletDrop,
+            transform: `translateY(${(1 - walletDrop) * -200}px) rotate(${(1 - walletDrop) * -15}deg)`,
+          }}
+        >
+          {/* SVG Wallet */}
+          <svg width="380" height="280" viewBox="0 0 380 280">
+            <rect x="20" y="60" width="340" height="200" rx="20" fill="#1C1C1C" stroke="#FE7F2D" strokeWidth="4" />
+            <rect x="20" y="60" width="340" height="60" rx="20" fill="#FE7F2D" />
+            <circle cx="320" cy="160" r="25" fill="#B9F3FC" opacity="0.8" />
+            <line x1="40" y1="180" x2="280" y2="180" stroke="#B9F3FC" strokeWidth="2" opacity="0.3" strokeDasharray="8 8" />
+            <text x="190" y="225" textAnchor="middle" fill="#FE7F2D" fontSize="40" fontWeight="900" fontFamily="JetBrains Mono">
+              EMPTY
+            </text>
+          </svg>
 
-      {/* LEFT — Envelope/Letter visual */}
-      <div style={{
-        position: 'absolute', top: 200, left: 100,
-        opacity: envelopeIn,
-        transform: `translateX(${shake}px) translateY(${(1 - envelopeIn) * 60}px) rotate(-3deg)`,
-      }}>
-        {/* Letter paper */}
-        <div style={{
-          width: 620, height: 720,
-          background: '#FBF5A7',
-          boxShadow: '0 30px 60px rgba(30,32,34,0.4)',
-          padding: 50,
-          border: '3px solid #1E2022',
-          position: 'relative',
-        }}>
-          {/* Header */}
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            borderBottom: '2px solid #1E2022', paddingBottom: 20,
-            opacity: letterIn,
-          }}>
-            <div>
-              <div style={{
-                fontFamily: 'Anton, sans-serif', fontSize: 28,
-                color: '#1E2022', letterSpacing: 2,
-              }}>
-                RÉPUBLIQUE FRANÇAISE
-              </div>
-              <div style={{
-                fontFamily: 'Montserrat', fontSize: 18,
-                color: '#1E2022', opacity: 0.7, marginTop: 4,
-              }}>
-                Notification officielle
-              </div>
-            </div>
-            {/* Seal */}
-            <div style={{
-              width: 70, height: 70, borderRadius: '50%',
-              border: '4px solid #1E2022',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'Anton', fontSize: 28, color: '#1E2022',
-            }}>
-              RF
-            </div>
+          <div
+            style={{
+              marginTop: 30,
+              fontFamily: 'JetBrains Mono',
+              fontSize: 65,
+              fontWeight: 800,
+              color: '#FE7F2D',
+              opacity: counterStart,
+            }}
+          >
+            ₹ {Math.round(counterValue).toLocaleString('en-IN')}
           </div>
-
-          {/* Body lines */}
-          <div style={{
-            opacity: letterIn,
-            transform: `translateY(${(1 - letterIn) * 20}px)`,
-            marginTop: 40,
-          }}>
-            <div style={{
-              fontFamily: 'Montserrat', fontSize: 26, color: '#1E2022',
-              fontWeight: 500, marginBottom: 20,
-            }}>
-              Objet : Diagnostic énergétique
-            </div>
-            <div style={{ height: 3, background: '#1E2022', opacity: 0.2, marginBottom: 12 }} />
-            <div style={{ height: 3, background: '#1E2022', opacity: 0.2, marginBottom: 12, width: '85%' }} />
-            <div style={{ height: 3, background: '#1E2022', opacity: 0.2, marginBottom: 12, width: '70%' }} />
-            <div style={{ height: 3, background: '#1E2022', opacity: 0.2, marginBottom: 30, width: '92%' }} />
-
-            <div style={{
-              fontFamily: 'Anton', fontSize: 52, color: '#1E2022',
-              lineHeight: 1.1, marginTop: 30,
-            }}>
-              VOTRE BIEN<br/>
-              CLASSÉ
-            </div>
-          </div>
-
-          {/* Big G stamp on letter */}
-          <div style={{
-            position: 'absolute', bottom: 60, right: 50,
-            transform: `rotate(${-15 + stamp * 5}deg) scale(${stamp})`,
-            opacity: stamp,
-          }}>
-            <div style={{
-              width: 200, height: 200, borderRadius: '50%',
-              background: '#ff0000',
-              border: '8px solid #1E2022',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'Clash Display, sans-serif',
-              fontSize: 180, fontWeight: 900, color: '#FBF5A7',
-              lineHeight: 1,
-            }}>
-              G
-            </div>
+          <div
+            style={{
+              fontFamily: 'Noto Sans Devanagari',
+              fontSize: 34,
+              color: '#B9F3FC',
+              opacity: counterStart * 0.8,
+              marginTop: 10,
+            }}
+          >
+            महीने के आखिर में
           </div>
         </div>
-      </div>
 
-      {/* RIGHT — Verdict */}
-      <div style={{
-        position: 'absolute', top: 240, right: 80, width: 800,
-        opacity: verdictIn,
-        transform: `translateX(${(1 - verdictIn) * 60}px)`,
-      }}>
-        <div style={{
-          fontFamily: 'Bricolage Grotesque', fontSize: 28,
-          color: '#1E2022', fontWeight: 600, letterSpacing: 3,
-          textTransform: 'uppercase', marginBottom: 20,
-        }}>
-          → Le verdict
-        </div>
+        {/* RIGHT — Host Intro */}
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            paddingRight: 100,
+            opacity: introOp,
+            transform: `translateX(${(1 - introOp) * 80}px)`,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'Inter',
+              fontSize: 36,
+              color: '#B9F3FC',
+              opacity: 0.7,
+              letterSpacing: 4,
+              marginBottom: 20,
+            }}
+          >
+            MEET YOUR HOST
+          </div>
 
-        <div style={{
-          fontFamily: 'Clash Display, sans-serif',
-          fontSize: 110, fontWeight: 800, color: '#1E2022',
-          lineHeight: 0.95, letterSpacing: -3,
-        }}>
-          INTERDIT
-        </div>
-        <div style={{
-          fontFamily: 'Clash Display, sans-serif',
-          fontSize: 110, fontWeight: 800, color: '#1E2022',
-          lineHeight: 0.95, letterSpacing: -3,
-        }}>
-          À LA
-        </div>
-        <div style={{
-          fontFamily: 'Clash Display, sans-serif',
-          fontSize: 110, fontWeight: 800,
-          lineHeight: 0.95, letterSpacing: -3,
-          background: '#1E2022', color: '#F4CE14',
-          display: 'inline-block', padding: '0 20px',
-        }}>
-          LOCATION.
-        </div>
+          <div
+            style={{
+              fontFamily: 'Yantra One',
+              fontSize: 187,
+              fontWeight: 900,
+              color: '#FE7F2D',
+              lineHeight: 0.9,
+              textShadow: '0 0 40px rgba(254, 127, 45, 0.4)',
+            }}
+          >
+            कुनाल
+          </div>
 
-        <div style={{
-          marginTop: 50,
-          opacity: plusDuTout,
-          transform: `scale(${plusDuTout})`,
-          display: 'inline-block',
-        }}>
-          <div style={{
-            background: '#ff0000', color: '#FBF5A7',
-            fontFamily: 'Anton, sans-serif',
-            fontSize: 72, padding: '15px 40px',
-            letterSpacing: 3, lineHeight: 1,
-            border: '6px solid #1E2022',
-            transform: `rotate(-2deg)`,
-          }}>
-            PLUS DU TOUT
+          <div
+            style={{
+              opacity: nameOp,
+              fontFamily: 'Inter',
+              fontSize: 51,
+              fontWeight: 700,
+              color: '#B9F3FC',
+              marginTop: 20,
+              borderLeft: '6px solid #FE7F2D',
+              paddingLeft: 25,
+            }}
+          >
+            ProBuffet HQ
+          </div>
+
+          <div
+            style={{
+              opacity: nameOp * 0.8,
+              fontFamily: 'Noto Sans Devanagari',
+              fontSize: 38,
+              color: '#F5F5F5',
+              marginTop: 25,
+            }}
+          >
+            पैसे के पर्दे खोलने वाला
           </div>
         </div>
-      </div>
+      </AbsoluteFill>
 
       {/* Vignette */}
-      <AbsoluteFill style={{
-        boxShadow: 'inset 0 0 250px rgba(30,32,34,0.4)',
-        pointerEvents: 'none',
-      }} />
+      <AbsoluteFill
+        style={{
+          background: 'radial-gradient(circle at center, transparent 45%, rgba(0,0,0,0.55) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
 
       {/* Watermark */}
-      <div style={{
-        position: 'absolute', bottom: 30, right: 45,
-        fontFamily: 'Montserrat, sans-serif',
-        fontSize: 22, fontWeight: 600, color: '#1E2022',
-        opacity: 0.4, letterSpacing: 1,
-      }}>
-        Matures Finance
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 30,
+          right: 45,
+          fontFamily: 'Inter',
+          fontSize: 22,
+          fontWeight: 600,
+          color: '#9E9E9E',
+          opacity: 0.3,
+        }}
+      >
+        ProBuffet HQ
       </div>
     </AbsoluteFill>
   );
 };
 
-export default Scene02_CourrierG;
+export default Scene02_EmptyWallet;
 ```
 
 ```tsx
@@ -536,8 +518,8 @@ import React from 'react';
 import { useCurrentFrame, useVideoConfig, interpolate, Easing, spring, AbsoluteFill } from 'remotion';
 
 export const compositionConfig = {
-  id: 'Scene03_FranceLuca',
-  durationInSeconds: 18,
+  id: 'Scene03_InflationData',
+  durationInSeconds: 27,
   fps: 30,
   width: 1920,
   height: 1080,
@@ -548,7 +530,7 @@ const seededRandom = (seed: number): number => {
   return x - Math.floor(x);
 };
 
-const Scene03_FranceLuca: React.FC = () => {
+const Scene03_InflationData: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
 
@@ -559,236 +541,285 @@ const Scene03_FranceLuca: React.FC = () => {
     extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
   });
 
-  const titleIn = sp(10);
-  const dotsIn = sp(40);
+  const titleOp = sp(15);
+  const oldValOp = sp(60);
+  const arrowOp = sp(110);
+  const arrowExtend = interpolate(sp(115), [0, 1], [0, 240]);
+  const newValOp = sp(160);
+  const newVal = interpolate(sp(165), [0, 1], [4.2, 4.8]);
+  const oldVal = interpolate(sp(65), [0, 1], [0, 4.2]);
+  const badgeOp = sp(220);
+  const chartOp = sp(260);
 
-  // Counter
-  const counterRaw = interpolate(frame, [40, 160], [0, 47000], { extrapolateRight: 'clamp' });
-  const counter = Math.floor(counterRaw);
-  const formatted = counter.toLocaleString('fr-FR').replace(/,/g, ' ');
-
-  const dividerIn = sp(180);
-  const lucaIn = sp(210);
-  const tagIn = sp(280);
-  const missionIn = sp(340);
-
-  // Pulse for dots
-  const pulse = 0.5 + Math.sin(frame * 0.08) * 0.3;
+  // Camera tilt
+  const tilt = interpolate(frame, [0, durationInFrames], [-1, 1]);
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#F4CE14', overflow: 'hidden', opacity: exitOp }}>
-      {/* Gradient */}
-      <AbsoluteFill style={{
-        background: 'radial-gradient(ellipse at 50% 30%, rgba(251,245,167,0.5) 0%, transparent 60%)',
-      }} />
+    <AbsoluteFill style={{ backgroundColor: '#635985', overflow: 'hidden', opacity: exitOp }}>
+      {/* Gradient Background */}
+      <AbsoluteFill
+        style={{
+          background: 'linear-gradient(180deg, #4A4068 0%, #635985 60%, #7B6FA8 100%)',
+        }}
+      />
 
-      {/* Shape Layers */}
-      <div style={{
-        position: 'absolute', top: '15%', left: '15%',
-        width: 400, height: 400,
-        background: '#1E2022', opacity: 0.04,
-        transform: `rotate(${frame * 0.2}deg)`,
-        clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '10%', right: '10%',
-        width: 350, height: 350, borderRadius: '50%',
-        border: '3px solid #1E2022', opacity: 0.08,
-        transform: `scale(${1 + Math.sin(frame * 0.04) * 0.05})`,
-      }} />
+      {/* Shape Layer — Rectangles */}
+      {[0, 1, 2, 3].map((i) => (
+        <div
+          key={`rect-${i}`}
+          style={{
+            position: 'absolute',
+            left: 100 + i * 450,
+            top: 50 + (i % 2) * 700,
+            width: 400,
+            height: 300,
+            border: '2px solid #B9F3FC',
+            opacity: 0.05,
+            transform: `rotate(${Math.sin(frame * 0.01 + i) * 5}deg)`,
+          }}
+        />
+      ))}
 
-      {/* Dot grid texture */}
-      <svg width="1920" height="1080" style={{ position: 'absolute', opacity: 0.1 }}>
-        <defs>
-          <pattern id="dots" width="35" height="35" patternUnits="userSpaceOnUse">
-            <circle cx="17.5" cy="17.5" r="1.5" fill="#1E2022" />
-          </pattern>
-        </defs>
-        <rect width="1920" height="1080" fill="url(#dots)" />
-      </svg>
+      {/* Grid Texture */}
+      <AbsoluteFill style={{ opacity: 0.06 }}>
+        {Array.from({ length: 18 }).map((_, i) => (
+          <div
+            key={`h-${i}`}
+            style={{
+              position: 'absolute',
+              top: i * 60,
+              left: 0,
+              width: '100%',
+              height: 1,
+              backgroundColor: '#B9F3FC',
+            }}
+          />
+        ))}
+      </AbsoluteFill>
 
       {/* Particles */}
-      {Array.from({ length: 20 }).map((_, i) => {
-        const x = seededRandom(i + 11) * 1920;
-        const y = seededRandom(i + 90) * 1080;
+      {Array.from({ length: 25 }).map((_, i) => {
+        const seed = seededRandom(i + 30);
+        const x = (seed * 1920 + frame * 0.3) % 1920;
+        const y = seededRandom(i + 130) * 1080;
         return (
-          <div key={i} style={{
-            position: 'absolute',
-            left: x + Math.sin((frame + i * 22) * 0.02) * 25,
-            top: y + Math.cos((frame + i * 17) * 0.02) * 20,
-            width: 5, height: 5, borderRadius: '50%',
-            background: i % 2 ? '#1E2022' : '#FBF5A7',
-            opacity: 0.4,
-          }} />
+          <div
+            key={`p-${i}`}
+            style={{
+              position: 'absolute',
+              left: x,
+              top: y,
+              width: 3,
+              height: 3,
+              borderRadius: '50%',
+              backgroundColor: '#FE7F2D',
+              opacity: 0.5,
+            }}
+          />
         );
       })}
 
-      {/* LEFT — Stat block */}
-      <div style={{
-        position: 'absolute', top: 120, left: 100, width: 1000,
-      }}>
-        <div style={{
-          opacity: titleIn,
-          transform: `translateX(${(1 - titleIn) * -30}px)`,
-          display: 'flex', alignItems: 'center', gap: 16, marginBottom: 30,
-        }}>
-          <div style={{
-            width: 14, height: 14, borderRadius: '50%',
-            background: '#ff0000',
-            transform: `scale(${pulse})`,
-          }} />
-          <div style={{
-            fontFamily: 'Bricolage Grotesque', fontSize: 30,
-            color: '#1E2022', fontWeight: 700, letterSpacing: 4,
-            textTransform: 'uppercase',
-          }}>
-            En direct · France · 2026
+      <AbsoluteFill style={{ transform: `rotate(${tilt * 0.3}deg)` }}>
+        {/* Top Title */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 90,
+            left: 0,
+            right: 0,
+            textAlign: 'center',
+            opacity: titleOp,
+            transform: `translateY(${(1 - titleOp) * -30}px)`,
+          }}
+        >
+          <div
+            style={{
+              display: 'inline-block',
+              fontFamily: 'Inter',
+              fontSize: 32,
+              fontWeight: 700,
+              color: '#1C1C1C',
+              backgroundColor: '#B9F3FC',
+              padding: '10px 30px',
+              letterSpacing: 3,
+              borderRadius: 4,
+            }}
+          >
+            FOOD INFLATION INDIA
+          </div>
+          <div
+            style={{
+              fontFamily: 'Noto Sans Devanagari',
+              fontSize: 60,
+              fontWeight: 800,
+              color: '#F5F5F5',
+              marginTop: 18,
+            }}
+          >
+            भारतीय Consumer Basket का बड़ा हिस्सा
           </div>
         </div>
 
-        <div style={{
-          fontFamily: 'Anton, sans-serif', fontSize: 80,
-          color: '#1E2022', lineHeight: 0.95, letterSpacing: -1,
-          opacity: titleIn,
-          transform: `translateY(${(1 - titleIn) * 40}px)`,
-          marginBottom: 30,
-        }}>
-          CETTE HISTOIRE<br/>
-          SE RÉPÈTE.
+        {/* Center comparison */}
+        <AbsoluteFill style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 60 }}>
+          {/* OLD Value */}
+          <div
+            style={{
+              opacity: oldValOp,
+              transform: `scale(${oldValOp})`,
+              textAlign: 'center',
+              marginRight: 40,
+            }}
+          >
+            <div style={{ fontFamily: 'Inter', fontSize: 32, color: '#B9F3FC', opacity: 0.7, letterSpacing: 4 }}>
+              APRIL
+            </div>
+            <div
+              style={{
+                fontFamily: 'JetBrains Mono',
+                fontSize: 221,
+                fontWeight: 900,
+                color: '#B9F3FC',
+                lineHeight: 1,
+              }}
+            >
+              {oldVal.toFixed(1)}%
+            </div>
+          </div>
+
+          {/* Arrow */}
+          <div style={{ opacity: arrowOp, display: 'flex', alignItems: 'center' }}>
+            <div
+              style={{
+                width: arrowExtend,
+                height: 8,
+                backgroundColor: '#FE7F2D',
+                boxShadow: '0 0 25px #FE7F2D',
+              }}
+            />
+            <svg width="60" height="60" viewBox="0 0 60 60" style={{ marginLeft: -2 }}>
+              <polygon points="0,10 0,50 50,30" fill="#FE7F2D" />
+            </svg>
+          </div>
+
+          {/* NEW Value */}
+          <div
+            style={{
+              opacity: newValOp,
+              transform: `scale(${newValOp}) translateY(${Math.sin(frame * 0.08) * 6}px)`,
+              textAlign: 'center',
+              marginLeft: 40,
+            }}
+          >
+            <div style={{ fontFamily: 'Inter', fontSize: 32, color: '#FE7F2D', opacity: 1, letterSpacing: 4, fontWeight: 700 }}>
+              NOW
+            </div>
+            <div
+              style={{
+                fontFamily: 'JetBrains Mono',
+                fontSize: 272,
+                fontWeight: 900,
+                color: '#FE7F2D',
+                lineHeight: 1,
+                textShadow: '0 0 50px rgba(254, 127, 45, 0.5)',
+              }}
+            >
+              {newVal.toFixed(1)}%
+            </div>
+          </div>
+        </AbsoluteFill>
+
+        {/* Bottom Badge — 16 Months High */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 220,
+            left: 0,
+            right: 0,
+            textAlign: 'center',
+            opacity: badgeOp,
+            transform: `scale(${badgeOp})`,
+          }}
+        >
+          <div
+            style={{
+              display: 'inline-block',
+              backgroundColor: '#FE7F2D',
+              color: '#1C1C1C',
+              fontFamily: 'Inter',
+              fontSize: 60,
+              fontWeight: 900,
+              padding: '20px 60px',
+              borderRadius: 8,
+              letterSpacing: 2,
+              boxShadow: '0 0 40px rgba(254, 127, 45, 0.6)',
+            }}
+          >
+            16 MONTHS HIGH
+          </div>
         </div>
 
-        {/* Big counter */}
-        <div style={{
-          opacity: dotsIn,
-          background: '#1E2022',
-          padding: '40px 60px',
-          borderRadius: 20,
-          transform: `translateY(${(1 - dotsIn) * 30}px)`,
-          boxShadow: '0 25px 60px rgba(30,32,34,0.4)',
-          display: 'inline-block',
-        }}>
-          <div style={{
-            fontFamily: 'Bricolage Grotesque', fontSize: 26,
-            color: '#FBF5A7', letterSpacing: 3, textTransform: 'uppercase',
-            marginBottom: 10,
-          }}>
-            Foyers concernés
-          </div>
-          <div style={{
-            fontFamily: 'Space Mono, monospace',
-            fontSize: 160, fontWeight: 700, color: '#F4CE14',
-            lineHeight: 1, letterSpacing: -3,
-          }}>
-            {formatted}+
-          </div>
-          <div style={{
-            fontFamily: 'Montserrat', fontSize: 26,
-            color: '#FBF5A7', opacity: 0.8, marginTop: 8,
-          }}>
-            et le compteur tourne...
-          </div>
-        </div>
-      </div>
-
-      {/* RIGHT — France grid visualization */}
-      <div style={{
-        position: 'absolute', top: 140, right: 100,
-        opacity: dotsIn,
-        transform: `scale(${dotsIn})`,
-      }}>
-        <div style={{
-          fontFamily: 'Bricolage Grotesque', fontSize: 24,
-          color: '#1E2022', letterSpacing: 3, textTransform: 'uppercase',
-          fontWeight: 600, marginBottom: 20, textAlign: 'center',
-        }}>
-          Chaque point = un foyer
-        </div>
-        <div style={{
-          width: 520, height: 600,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(20, 1fr)',
-          gap: 6,
-          padding: 30,
-          background: 'rgba(30,32,34,0.05)',
-          border: '2px dashed #1E2022',
-          borderRadius: 16,
-        }}>
-          {Array.from({ length: 360 }).map((_, i) => {
-            const appear = sp(40 + i * 0.5, { damping: 15 });
-            const isRed = seededRandom(i + 200) > 0.85;
+        {/* Mini Bar Chart at Bottom */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 80,
+            left: 0,
+            right: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 14,
+            opacity: chartOp,
+            alignItems: 'flex-end',
+          }}
+        >
+          {[2.5, 3.1, 2.8, 3.5, 3.9, 3.4, 3.7, 4.0, 4.1, 3.8, 4.0, 4.1, 4.0, 4.15, 4.2, 4.8].map((v, i) => {
+            const isLast = i === 15;
+            const grow = Math.min(1, sp(265 + i * 4));
             return (
-              <div key={i} style={{
-                width: 14, height: 14, borderRadius: '50%',
-                background: isRed ? '#ff0000' : '#1E2022',
-                opacity: appear * (isRed ? 1 : 0.7),
-                transform: `scale(${appear})`,
-              }} />
+              <div
+                key={`bar-${i}`}
+                style={{
+                  width: 36,
+                  height: v * 18 * grow,
+                  backgroundColor: isLast ? '#FE7F2D' : '#B9F3FC',
+                  opacity: isLast ? 1 : 0.5,
+                  borderRadius: '4px 4px 0 0',
+                }}
+              />
             );
           })}
         </div>
-      </div>
-
-      {/* Bottom divider */}
-      <div style={{
-        position: 'absolute', bottom: 220, left: 100, right: 100,
-        height: 3, background: '#1E2022',
-        opacity: dividerIn,
-        transform: `scaleX(${dividerIn})`, transformOrigin: 'left',
-      }} />
-
-      {/* Luca intro bar */}
-      <div style={{
-        position: 'absolute', bottom: 80, left: 100, right: 100,
-        display: 'flex', alignItems: 'center', gap: 30,
-      }}>
-        <div style={{
-          opacity: lucaIn,
-          transform: `scale(${lucaIn})`,
-          width: 120, height: 120, borderRadius: '50%',
-          background: '#1E2022',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: 'Clash Display', fontSize: 64, fontWeight: 800,
-          color: '#F4CE14',
-          border: '4px solid #FBF5A7',
-        }}>
-          L
-        </div>
-        <div style={{ opacity: tagIn, transform: `translateX(${(1 - tagIn) * 30}px)` }}>
-          <div style={{
-            fontFamily: 'Clash Display', fontSize: 64, fontWeight: 800,
-            color: '#1E2022', lineHeight: 1, letterSpacing: -1,
-          }}>
-            LUCA · Matures Finance
-          </div>
-          <div style={{
-            fontFamily: 'Montserrat', fontSize: 28, color: '#1E2022',
-            fontWeight: 500, marginTop: 6, opacity: missionIn,
-          }}>
-            Décortiquer ce qui touche → votre patrimoine, votre argent, vos décisions.
-          </div>
-        </div>
-      </div>
+      </AbsoluteFill>
 
       {/* Vignette */}
-      <AbsoluteFill style={{
-        boxShadow: 'inset 0 0 250px rgba(30,32,34,0.4)',
-        pointerEvents: 'none',
-      }} />
+      <AbsoluteFill
+        style={{
+          background: 'radial-gradient(circle at center, transparent 50%, rgba(0,0,0,0.6) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
 
       {/* Watermark */}
-      <div style={{
-        position: 'absolute', bottom: 30, right: 45,
-        fontFamily: 'Montserrat, sans-serif',
-        fontSize: 22, fontWeight: 600, color: '#1E2022',
-        opacity: 0.4, letterSpacing: 1,
-      }}>
-        Matures Finance
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 30,
+          right: 45,
+          fontFamily: 'Inter',
+          fontSize: 22,
+          fontWeight: 600,
+          color: '#9E9E9E',
+          opacity: 0.3,
+        }}
+      >
+        ProBuffet HQ
       </div>
     </AbsoluteFill>
   );
 };
 
-export default Scene03_FranceLuca;
+export default Scene03_InflationData;
 ```
 
 ```tsx
@@ -797,8 +828,8 @@ import React from 'react';
 import { useCurrentFrame, useVideoConfig, interpolate, Easing, spring, AbsoluteFill } from 'remotion';
 
 export const compositionConfig = {
-  id: 'Scene04_TerrainMine',
-  durationInSeconds: 18,
+  id: 'Scene04_WarToPlate',
+  durationInSeconds: 28,
   fps: 30,
   width: 1920,
   height: 1080,
@@ -809,7 +840,7 @@ const seededRandom = (seed: number): number => {
   return x - Math.floor(x);
 };
 
-const Scene04_TerrainMine: React.FC = () => {
+const Scene04_WarToPlate: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
 
@@ -820,495 +851,1582 @@ const Scene04_TerrainMine: React.FC = () => {
     extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
   });
 
-  const warnIn = sp(10);
-  const titleIn = sp(40);
-  const a = sp(100, { damping: 8, stiffness: 130 });
-  const d = sp(140, { damping: 8, stiffness: 130 });
-  const g = sp(180, { damping: 8, stiffness: 130 });
+  const titleOp = sp(15);
+  const node1Op = sp(60);
+  const link1Op = sp(95);
+  const node2Op = sp(130);
+  const link2Op = sp(165);
+  const node3Op = sp(200);
+  const finalOp = sp(260);
 
-  const arrowIn = sp(230);
-  const valueIn = sp(270);
-  const counterRaw = interpolate(frame, [270, 380], [0, 70000], { extrapolateRight: 'clamp' });
-  const counter = Math.floor(counterRaw / 1000) * 1000;
-  const formatted = counter.toLocaleString('fr-FR').replace(/,/g, ' ');
-
-  const footIn = sp(400);
+  // Camera orbit
+  const orbit = interpolate(frame, [0, durationInFrames], [0, 6]);
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#F4CE14', overflow: 'hidden', opacity: exitOp }}>
+    <AbsoluteFill style={{ backgroundColor: '#635985', overflow: 'hidden', opacity: exitOp }}>
       {/* Gradient */}
-      <AbsoluteFill style={{
-        background: 'linear-gradient(180deg, rgba(244,206,20,1) 0%, rgba(251,245,167,0.6) 50%, rgba(244,206,20,1) 100%)',
-      }} />
+      <AbsoluteFill
+        style={{
+          background: 'radial-gradient(ellipse at top, #7B6FA8 0%, #635985 50%, #3D3654 100%)',
+        }}
+      />
 
-      {/* Warning stripes shape */}
-      <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, height: 60,
-        background: 'repeating-linear-gradient(45deg, #1E2022 0px, #1E2022 30px, #F4CE14 30px, #F4CE14 60px)',
-        opacity: 0.3,
-        transform: `translateX(${(frame * 1.5) % 60}px)`,
-      }} />
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0, height: 60,
-        background: 'repeating-linear-gradient(45deg, #1E2022 0px, #1E2022 30px, #F4CE14 30px, #F4CE14 60px)',
-        opacity: 0.3,
-        transform: `translateX(${-(frame * 1.5) % 60}px)`,
-      }} />
+      {/* Shape Layer */}
+      {[0, 1, 2].map((i) => (
+        <div
+          key={`hex-${i}`}
+          style={{
+            position: 'absolute',
+            left: 300 + i * 600,
+            top: 200 + (i % 2) * 400,
+            width: 280,
+            height: 280,
+            borderRadius: '50%',
+            border: '3px solid #FE7F2D',
+            opacity: 0.05,
+            transform: `scale(${1 + Math.sin(frame * 0.02 + i) * 0.1})`,
+          }}
+        />
+      ))}
 
-      {/* Shape layers */}
-      <div style={{
-        position: 'absolute', top: '20%', left: '-5%',
-        width: 500, height: 500,
-        background: '#1E2022', opacity: 0.04,
-        transform: `rotate(${frame * 0.15}deg)`,
-        clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)',
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '15%', right: '-5%',
-        width: 450, height: 450, borderRadius: '50%',
-        background: '#1E2022', opacity: 0.05,
-        transform: `scale(${1 + Math.sin(frame * 0.03) * 0.06})`,
-      }} />
+      {/* Texture — dots */}
+      <AbsoluteFill style={{ opacity: 0.08 }}>
+        {Array.from({ length: 40 }).map((_, i) => {
+          const x = (i % 8) * 240 + 60;
+          const y = Math.floor(i / 8) * 220 + 60;
+          return (
+            <div
+              key={`dot-${i}`}
+              style={{
+                position: 'absolute',
+                left: x,
+                top: y,
+                width: 4,
+                height: 4,
+                borderRadius: '50%',
+                backgroundColor: '#B9F3FC',
+              }}
+            />
+          );
+        })}
+      </AbsoluteFill>
 
-      {/* Crosshatch texture */}
-      <svg width="1920" height="1080" style={{ position: 'absolute', opacity: 0.06 }}>
-        <defs>
-          <pattern id="cross4" width="50" height="50" patternUnits="userSpaceOnUse">
-            <line x1="0" y1="25" x2="50" y2="25" stroke="#1E2022" strokeWidth="1" />
-            <line x1="25" y1="0" x2="25" y2="50" stroke="#1E2022" strokeWidth="1" />
-          </pattern>
-        </defs>
-        <rect width="1920" height="1080" fill="url(#cross4)" />
-      </svg>
+      {/* Particles */}
+      {Array.from({ length: 20 }).map((_, i) => {
+        const seed = seededRandom(i + 70);
+        const x = (seed * 1920 + frame * 0.4) % 1920;
+        const y = seededRandom(i + 170) * 1080;
+        return (
+          <div
+            key={`p-${i}`}
+            style={{
+              position: 'absolute',
+              left: x,
+              top: y,
+              width: 3,
+              height: 3,
+              borderRadius: '50%',
+              backgroundColor: '#FE7F2D',
+              opacity: 0.4,
+            }}
+          />
+        );
+      })}
+
+      {/* Title */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 70,
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+          opacity: titleOp,
+          transform: `translateY(${(1 - titleOp) * -30}px)`,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: 'Yantra One',
+            fontSize: 102,
+            fontWeight: 900,
+            color: '#FE7F2D',
+            textShadow: '0 0 30px rgba(254, 127, 45, 0.5)',
+          }}
+        >
+          जंग से थाली तक
+        </div>
+        <div style={{ fontFamily: 'Inter', fontSize: 34, color: '#B9F3FC', letterSpacing: 6, marginTop: 8 }}>
+          THE SUPPLY CHAIN
+        </div>
+      </div>
+
+      {/* The 3-Node Chain */}
+      <AbsoluteFill style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', transform: `rotate(${orbit * 0.1}deg)` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginTop: 80 }}>
+          {/* NODE 1 — IRAN/ISRAEL */}
+          <div
+            style={{
+              opacity: node1Op,
+              transform: `scale(${node1Op})`,
+              width: 320,
+              height: 320,
+              borderRadius: '50%',
+              border: '6px solid #FE7F2D',
+              backgroundColor: 'rgba(254, 127, 45, 0.15)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 0 50px rgba(254, 127, 45, 0.4)',
+            }}
+          >
+            <svg width="90" height="90" viewBox="0 0 90 90">
+              <polygon points="45,10 55,35 80,35 60,52 68,80 45,65 22,80 30,52 10,35 35,35" fill="#FE7F2D" />
+            </svg>
+            <div style={{ fontFamily: 'Yantra One', fontSize: 51, color: '#B9F3FC', marginTop: 12, fontWeight: 900 }}>
+              जंग
+            </div>
+            <div style={{ fontFamily: 'Inter', fontSize: 24, color: '#F5F5F5', opacity: 0.7, letterSpacing: 3 }}>
+              MIDDLE EAST
+            </div>
+          </div>
+
+          {/* LINK 1 */}
+          <div
+            style={{
+              width: 120,
+              height: 8,
+              backgroundColor: '#B9F3FC',
+              opacity: link1Op,
+              transform: `scaleX(${link1Op})`,
+              transformOrigin: 'left',
+              boxShadow: '0 0 15px #B9F3FC',
+            }}
+          />
+
+          {/* NODE 2 — OIL/FERTILIZER */}
+          <div
+            style={{
+              opacity: node2Op,
+              transform: `scale(${node2Op})`,
+              width: 320,
+              height: 320,
+              borderRadius: '50%',
+              border: '6px solid #B9F3FC',
+              backgroundColor: 'rgba(185, 243, 252, 0.12)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 0 50px rgba(185, 243, 252, 0.3)',
+            }}
+          >
+            <svg width="90" height="90" viewBox="0 0 90 90">
+              <path d="M45 15 L25 50 Q25 70 45 75 Q65 70 65 50 Z" fill="#B9F3FC" />
+              <circle cx="45" cy="55" r="6" fill="#1C1C1C" />
+            </svg>
+            <div style={{ fontFamily: 'Yantra One', fontSize: 47, color: '#FE7F2D', marginTop: 12, fontWeight: 900 }}>
+              तेल · खाद
+            </div>
+            <div style={{ fontFamily: 'Inter', fontSize: 24, color: '#F5F5F5', opacity: 0.7, letterSpacing: 3 }}>
+              OIL · FERTILIZER
+            </div>
+          </div>
+
+          {/* LINK 2 */}
+          <div
+            style={{
+              width: 120,
+              height: 8,
+              backgroundColor: '#B9F3FC',
+              opacity: link2Op,
+              transform: `scaleX(${link2Op})`,
+              transformOrigin: 'left',
+              boxShadow: '0 0 15px #B9F3FC',
+            }}
+          />
+
+          {/* NODE 3 — TOMATO PLATE */}
+          <div
+            style={{
+              opacity: node3Op,
+              transform: `scale(${node3Op})`,
+              width: 320,
+              height: 320,
+              borderRadius: '50%',
+              border: '6px solid #FE7F2D',
+              backgroundColor: 'rgba(254, 127, 45, 0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 0 60px rgba(254, 127, 45, 0.6)',
+            }}
+          >
+            <svg width="90" height="90" viewBox="0 0 90 90">
+              <ellipse cx="45" cy="60" rx="35" ry="8" fill="#1C1C1C" opacity="0.4" />
+              <circle cx="45" cy="50" r="28" fill="#FE7F2D" />
+              <path d="M40 25 Q45 18 50 25 L52 30 L38 30 Z" fill="#B9F3FC" />
+            </svg>
+            <div style={{ fontFamily: 'Yantra One', fontSize: 47, color: '#B9F3FC', marginTop: 12, fontWeight: 900 }}>
+              आपकी थाली
+            </div>
+            <div style={{ fontFamily: 'Inter', fontSize: 24, color: '#F5F5F5', opacity: 0.7, letterSpacing: 3 }}>
+              YOUR PLATE
+            </div>
+          </div>
+        </div>
+      </AbsoluteFill>
+
+      {/* Bottom Quote */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 90,
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+          opacity: finalOp,
+        }}
+      >
+        <div
+          style={{
+            display: 'inline-block',
+            fontFamily: 'Noto Sans Devanagari',
+            fontSize: 47,
+            color: '#F5F5F5',
+            borderTop: '3px solid #FE7F2D',
+            borderBottom: '3px solid #FE7F2D',
+            padding: '14px 50px',
+            fontWeight: 700,
+          }}
+        >
+          एक-एक कड़ी जोड़कर दिखाता हूं
+        </div>
+      </div>
+
+      {/* Vignette */}
+      <AbsoluteFill
+        style={{
+          background: 'radial-gradient(circle at center, transparent 50%, rgba(0,0,0,0.6) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Watermark */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 30,
+          right: 45,
+          fontFamily: 'Inter',
+          fontSize: 22,
+          fontWeight: 600,
+          color: '#9E9E9E',
+          opacity: 0.3,
+        }}
+      >
+        ProBuffet HQ
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+export default Scene04_WarToPlate;
+```
+
+```tsx
+import React from 'react';
+
+import { useCurrentFrame, useVideoConfig, interpolate, Easing, spring, AbsoluteFill } from 'remotion';
+
+export const compositionConfig = {
+  id: 'Scene05_FertilizerKings',
+  durationInSeconds: 27,
+  fps: 30,
+  width: 1920,
+  height: 1080,
+};
+
+const seededRandom = (seed: number): number => {
+  const x = Math.sin(seed * 9999) * 10000;
+  return x - Math.floor(x);
+};
+
+const Scene05_FertilizerKings: React.FC = () => {
+  const frame = useCurrentFrame();
+  const { fps, durationInFrames } = useVideoConfig();
+
+  const sp = (delay: number, config?: object) =>
+    spring({ frame: Math.max(0, frame - delay), fps, config: { damping: 12, mass: 0.4, stiffness: 120, ...config } });
+
+  const exitOp = interpolate(frame, [durationInFrames - 15, durationInFrames], [1, 0], {
+    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
+  });
+
+  const titleOp = sp(15);
+  const ureaOp = sp(60);
+  const dapOp = sp(95);
+  const potashOp = sp(130);
+  const podiumOp = sp(180);
+  const rankOp = sp(220);
+
+  // Camera zoom in
+  const zoom = interpolate(frame, [0, durationInFrames], [0.95, 1.05]);
+
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#635985', overflow: 'hidden', opacity: exitOp }}>
+      {/* Gradient */}
+      <AbsoluteFill
+        style={{
+          background: 'linear-gradient(160deg, #4A4068 0%, #635985 55%, #7B6FA8 100%)',
+        }}
+      />
+
+      {/* Shape Layer */}
+      {[0, 1, 2, 3].map((i) => (
+        <div
+          key={`circ-${i}`}
+          style={{
+            position: 'absolute',
+            left: 100 + i * 480,
+            top: 100 + (i % 2) * 600,
+            width: 350,
+            height: 350,
+            borderRadius: '50%',
+            border: '2px solid #B9F3FC',
+            opacity: 0.06,
+            transform: `scale(${1 + Math.sin(frame * 0.015 + i) * 0.08})`,
+          }}
+        />
+      ))}
+
+      {/* Texture — radial lines from center */}
+      <AbsoluteFill style={{ opacity: 0.05 }}>
+        {Array.from({ length: 24 }).map((_, i) => (
+          <div
+            key={`ray-${i}`}
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              width: 1200,
+              height: 1,
+              backgroundColor: '#B9F3FC',
+              transformOrigin: 'left center',
+              transform: `rotate(${i * 15 + frame * 0.05}deg)`,
+            }}
+          />
+        ))}
+      </AbsoluteFill>
+
+      {/* Particles */}
+      {Array.from({ length: 30 }).map((_, i) => {
+        const seed = seededRandom(i + 100);
+        const x = seed * 1920;
+        const y = (seededRandom(i + 200) * 1080 + frame * 0.6) % 1080;
+        return (
+          <div
+            key={`p-${i}`}
+            style={{
+              position: 'absolute',
+              left: x,
+              top: y,
+              width: 3,
+              height: 3,
+              borderRadius: '50%',
+              backgroundColor: '#FE7F2D',
+              opacity: 0.3,
+            }}
+          />
+        );
+      })}
+
+      <AbsoluteFill style={{ transform: `scale(${zoom})` }}>
+        {/* Title */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 70,
+            left: 0,
+            right: 0,
+            textAlign: 'center',
+            opacity: titleOp,
+            transform: `translateY(${(1 - titleOp) * -30}px)`,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'Yantra One',
+              fontSize: 95,
+              fontWeight: 900,
+              color: '#B9F3FC',
+            }}
+          >
+            खेती के तीन स्तंभ
+          </div>
+          <div style={{ fontFamily: 'Inter', fontSize: 32, color: '#FE7F2D', letterSpacing: 6, marginTop: 6, fontWeight: 700 }}>
+            THE 3 FERTILIZER PILLARS
+          </div>
+        </div>
+
+        {/* Three Pillars */}
+        <AbsoluteFill style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 80, marginTop: 40 }}>
+          {/* UREA */}
+          <div
+            style={{
+              opacity: ureaOp,
+              transform: `translateY(${(1 - ureaOp) * 200}px)`,
+              width: 320,
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                height: 260,
+                background: 'linear-gradient(180deg, #FE7F2D 0%, #B9434F 100%)',
+                borderRadius: '20px 20px 0 0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 0 30px rgba(254, 127, 45, 0.5)',
+              }}
+            >
+              <div style={{ fontFamily: 'JetBrains Mono', fontSize: 102, fontWeight: 900, color: '#1C1C1C' }}>
+                N
+              </div>
+            </div>
+            <div
+              style={{
+                backgroundColor: '#1C1C1C',
+                padding: '20px',
+                fontFamily: 'Yantra One',
+                fontSize: 55,
+                color: '#FE7F2D',
+                fontWeight: 900,
+              }}
+            >
+              यूरिया
+            </div>
+            <div style={{ fontFamily: 'Inter', fontSize: 26, color: '#B9F3FC', marginTop: 10 }}>NITROGEN</div>
+          </div>
+
+          {/* DAP */}
+          <div
+            style={{
+              opacity: dapOp,
+              transform: `translateY(${(1 - dapOp) * 200}px)`,
+              width: 320,
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                height: 260,
+                background: 'linear-gradient(180deg, #B9F3FC 0%, #5BA8B5 100%)',
+                borderRadius: '20px 20px 0 0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 0 30px rgba(185, 243, 252, 0.5)',
+              }}
+            >
+              <div style={{ fontFamily: 'JetBrains Mono', fontSize: 102, fontWeight: 900, color: '#1C1C1C' }}>
+                P
+              </div>
+            </div>
+            <div
+              style={{
+                backgroundColor: '#1C1C1C',
+                padding: '20px',
+                fontFamily: 'Yantra One',
+                fontSize: 55,
+                color: '#B9F3FC',
+                fontWeight: 900,
+              }}
+            >
+              DAP
+            </div>
+            <div style={{ fontFamily: 'Inter', fontSize: 26, color: '#FE7F2D', marginTop: 10 }}>PHOSPHATE</div>
+          </div>
+
+          {/* POTASH */}
+          <div
+            style={{
+              opacity: potashOp,
+              transform: `translateY(${(1 - potashOp) * 200}px)`,
+              width: 320,
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                height: 260,
+                background: 'linear-gradient(180deg, #FFC107 0%, #B98800 100%)',
+                borderRadius: '20px 20px 0 0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 0 30px rgba(255, 193, 7, 0.5)',
+              }}
+            >
+              <div style={{ fontFamily: 'JetBrains Mono', fontSize: 102, fontWeight: 900, color: '#1C1C1C' }}>
+                K
+              </div>
+            </div>
+            <div
+              style={{
+                backgroundColor: '#1C1C1C',
+                padding: '20px',
+                fontFamily: 'Yantra One',
+                fontSize: 55,
+                color: '#FFC107',
+                fontWeight: 900,
+              }}
+            >
+              पोटाश
+            </div>
+            <div style={{ fontFamily: 'Inter', fontSize: 26, color: '#B9F3FC', marginTop: 10 }}>POTASSIUM</div>
+          </div>
+        </AbsoluteFill>
+
+        {/* Bottom — India Rank Badge */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 60,
+            left: 0,
+            right: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            opacity: rankOp,
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 30,
+              backgroundColor: '#1C1C1C',
+              padding: '24px 50px',
+              borderRadius: 10,
+              border: '3px solid #FE7F2D',
+              boxShadow: '0 0 35px rgba(254, 127, 45, 0.4)',
+            }}
+          >
+            <div
+              style={{
+                fontFamily: 'JetBrains Mono',
+                fontSize: 144,
+                fontWeight: 900,
+                color: '#FE7F2D',
+                lineHeight: 1,
+              }}
+            >
+              #2
+            </div>
+            <div>
+              <div style={{ fontFamily: 'Inter', fontSize: 32, color: '#B9F3FC', fontWeight: 700, letterSpacing: 3 }}>
+                INDIA RANKS
+              </div>
+              <div style={{ fontFamily: 'Noto Sans Devanagari', fontSize: 42, color: '#F5F5F5', fontWeight: 700 }}>
+                दुनिया में दूसरा सबसे बड़ा खपतकार
+              </div>
+            </div>
+          </div>
+        </div>
+      </AbsoluteFill>
+
+      {/* Vignette */}
+      <AbsoluteFill
+        style={{
+          background: 'radial-gradient(circle at center, transparent 45%, rgba(0,0,0,0.6) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Watermark */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 30,
+          right: 45,
+          fontFamily: 'Inter',
+          fontSize: 22,
+          fontWeight: 600,
+          color: '#9E9E9E',
+          opacity: 0.3,
+        }}
+      >
+        ProBuffet HQ
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+export default Scene05_FertilizerKings;
+```
+
+```tsx
+import React from 'react';
+
+import { useCurrentFrame, useVideoConfig, interpolate, Easing, spring, AbsoluteFill } from 'remotion';
+
+export const compositionConfig = {
+  id: 'Scene06_GulfImport',
+  durationInSeconds: 28,
+  fps: 30,
+  width: 1920,
+  height: 1080,
+};
+
+const seededRandom = (seed: number): number => {
+  const x = Math.sin(seed * 9999) * 10000;
+  return x - Math.floor(x);
+};
+
+const Scene06_GulfImport: React.FC = () => {
+  const frame = useCurrentFrame();
+  const { fps, durationInFrames } = useVideoConfig();
+
+  const sp = (delay: number, config?: object) =>
+    spring({ frame: Math.max(0, frame - delay), fps, config: { damping: 12, mass: 0.4, stiffness: 120, ...config } });
+
+  const exitOp = interpolate(frame, [durationInFrames - 15, durationInFrames], [1, 0], {
+    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
+  });
+
+  const titleOp = sp(15);
+  const sacksOp = sp(60);
+  const percentOp = sp(180);
+  const percentValue = interpolate(sp(185), [0, 1], [0, 70]);
+  const countriesOp = sp(230);
+
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#635985', overflow: 'hidden', opacity: exitOp }}>
+      {/* Gradient */}
+      <AbsoluteFill
+        style={{
+          background: 'linear-gradient(120deg, #3D3654 0%, #635985 50%, #4A4068 100%)',
+        }}
+      />
+
+      {/* Shape Layer — moving squares */}
+      {[0, 1, 2, 3].map((i) => (
+        <div
+          key={`sq-${i}`}
+          style={{
+            position: 'absolute',
+            left: 50 + i * 500,
+            top: 50 + (i % 2) * 700,
+            width: 280,
+            height: 280,
+            border: '2px solid #FE7F2D',
+            opacity: 0.05,
+            transform: `rotate(${frame * 0.1 + i * 30}deg)`,
+          }}
+        />
+      ))}
+
+      {/* Texture */}
+      <AbsoluteFill style={{ opacity: 0.06 }}>
+        {Array.from({ length: 15 }).map((_, i) => (
+          <div
+            key={`l-${i}`}
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: i * 80,
+              width: '100%',
+              height: 1,
+              backgroundColor: '#B9F3FC',
+            }}
+          />
+        ))}
+      </AbsoluteFill>
+
+      {/* Particles */}
+      {Array.from({ length: 25 }).map((_, i) => {
+        const seed = seededRandom(i + 80);
+        const x = (seed * 1920 + frame * 0.3) % 1920;
+        const y = seededRandom(i + 180) * 1080;
+        return (
+          <div
+            key={`p-${i}`}
+            style={{
+              position: 'absolute',
+              left: x,
+              top: y,
+              width: 2,
+              height: 2,
+              borderRadius: '50%',
+              backgroundColor: '#B9F3FC',
+              opacity: 0.5,
+            }}
+          />
+        );
+      })}
+
+      {/* Title */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 70,
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+          opacity: titleOp,
+          transform: `translateY(${(1 - titleOp) * -30}px)`,
+        }}
+      >
+        <div style={{ fontFamily: 'Inter', fontSize: 32, color: '#FE7F2D', letterSpacing: 6, fontWeight: 700 }}>
+          INDIA'S DEPENDENCE
+        </div>
+        <div
+          style={{
+            fontFamily: 'Yantra One',
+            fontSize: 110,
+            fontWeight: 900,
+            color: '#B9F3FC',
+            marginTop: 8,
+          }}
+        >
+          10 में से 7 बोरी
+        </div>
+      </div>
+
+      {/* 10 Sack Visualization */}
+      <AbsoluteFill style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: -60 }}>
+        <div style={{ display: 'flex', gap: 22 }}>
+          {Array.from({ length: 10 }).map((_, i) => {
+            const delay = 60 + i * 12;
+            const op = sp(delay);
+            const isGulf = i < 7;
+            return (
+              <div
+                key={`sack-${i}`}
+                style={{
+                  opacity: op,
+                  transform: `translateY(${(1 - op) * -100}px) scale(${op})`,
+                  width: 110,
+                  textAlign: 'center',
+                }}
+              >
+                {/* Sack SVG */}
+                <svg width="110" height="160" viewBox="0 0 110 160">
+                  <path
+                    d="M15 40 Q15 25 30 22 L80 22 Q95 25 95 40 L100 150 Q100 158 92 158 L18 158 Q10 158 10 150 Z"
+                    fill={isGulf ? '#FE7F2D' : '#B9F3FC'}
+                    stroke="#1C1C1C"
+                    strokeWidth="3"
+                  />
+                  <rect x="35" y="22" width="40" height="12" fill="#1C1C1C" />
+                  <text
+                    x="55"
+                    y="105"
+                    textAnchor="middle"
+                    fill="#1C1C1C"
+                    fontSize="32"
+                    fontWeight="900"
+                    fontFamily="JetBrains Mono"
+                  >
+                    N
+                  </text>
+                </svg>
+                <div
+                  style={{
+                    fontFamily: 'JetBrains Mono',
+                    fontSize: 26,
+                    fontWeight: 800,
+                    color: isGulf ? '#FE7F2D' : '#B9F3FC',
+                    marginTop: 6,
+                  }}
+                >
+                  {i + 1}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </AbsoluteFill>
+
+      {/* Big 70% Stat */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 280,
+          left: 100,
+          opacity: percentOp,
+          transform: `scale(${percentOp})`,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: 'JetBrains Mono',
+            fontSize: 255,
+            fontWeight: 900,
+            color: '#FE7F2D',
+            lineHeight: 1,
+            textShadow: '0 0 50px rgba(254, 127, 45, 0.5)',
+          }}
+        >
+          {Math.round(percentValue)}%
+        </div>
+        <div
+          style={{
+            fontFamily: 'Noto Sans Devanagari',
+            fontSize: 38,
+            color: '#B9F3FC',
+            fontWeight: 700,
+            marginTop: -20,
+          }}
+        >
+          खाड़ी देशों से आता है
+        </div>
+      </div>
+
+      {/* Right — Country List */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 280,
+          right: 100,
+          opacity: countriesOp,
+          transform: `translateX(${(1 - countriesOp) * 80}px)`,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: 'Inter',
+            fontSize: 28,
+            color: '#FE7F2D',
+            letterSpacing: 4,
+            fontWeight: 700,
+            marginBottom: 16,
+          }}
+        >
+          GULF SUPPLIERS
+        </div>
+        {['Oman', 'Saudi Arabia', 'UAE', 'Qatar', 'Bahrain'].map((c, i) => (
+          <div
+            key={c}
+            style={{
+              fontFamily: 'Inter',
+              fontSize: 47,
+              color: '#B9F3FC',
+              fontWeight: 700,
+              padding: '8px 0',
+              borderBottom: '1px solid rgba(185, 243, 252, 0.2)',
+              opacity: sp(240 + i * 10),
+            }}
+          >
+            {c}
+          </div>
+        ))}
+      </div>
+
+      {/* Vignette */}
+      <AbsoluteFill
+        style={{
+          background: 'radial-gradient(circle at center, transparent 50%, rgba(0,0,0,0.6) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Watermark */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 30,
+          right: 45,
+          fontFamily: 'Inter',
+          fontSize: 22,
+          fontWeight: 600,
+          color: '#9E9E9E',
+          opacity: 0.3,
+        }}
+      >
+        ProBuffet HQ
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+export default Scene06_GulfImport;
+```
+
+```tsx
+import React from 'react';
+
+import { useCurrentFrame, useVideoConfig, interpolate, Easing, spring, AbsoluteFill } from 'remotion';
+
+export const compositionConfig = {
+  id: 'Scene07_HormuzStrait',
+  durationInSeconds: 27,
+  fps: 30,
+  width: 1920,
+  height: 1080,
+};
+
+const seededRandom = (seed: number): number => {
+  const x = Math.sin(seed * 9999) * 10000;
+  return x - Math.floor(x);
+};
+
+const Scene07_HormuzStrait: React.FC = () => {
+  const frame = useCurrentFrame();
+  const { fps, durationInFrames } = useVideoConfig();
+
+  const sp = (delay: number, config?: object) =>
+    spring({ frame: Math.max(0, frame - delay), fps, config: { damping: 12, mass: 0.4, stiffness: 120, ...config } });
+
+  const exitOp = interpolate(frame, [durationInFrames - 15, durationInFrames], [1, 0], {
+    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
+  });
+
+  // Screen shake — first 3 seconds
+  const shakeAmt = interpolate(frame, [0, 60, 90], [8, 4, 0], { extrapolateRight: 'clamp' });
+  const shakeX = Math.sin(frame * 1.5) * shakeAmt;
+  const shakeY = Math.cos(frame * 1.8) * shakeAmt;
+
+  const titleOp = sp(20);
+  const straitOp = sp(70);
+  const stat1Op = sp(150);
+  const stat2Op = sp(195);
+  const stat3Op = sp(240);
+
+  return (
+    <AbsoluteFill
+      style={{
+        backgroundColor: '#635985',
+        overflow: 'hidden',
+        opacity: exitOp,
+        transform: `translate(${shakeX}px, ${shakeY}px)`,
+      }}
+    >
+      {/* Gradient — Dramatic */}
+      <AbsoluteFill
+        style={{
+          background: 'radial-gradient(ellipse at 50% 30%, #B9434F 0%, #635985 40%, #2D2D2D 100%)',
+        }}
+      />
+
+      {/* Shape Layer — Explosion rings */}
+      {[0, 1, 2].map((i) => {
+        const ringSize = 200 + ((frame + i * 30) % 90) * 8;
+        const ringOp = 0.15 - ((frame + i * 30) % 90) / 600;
+        return (
+          <div
+            key={`ring-${i}`}
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '40%',
+              width: ringSize,
+              height: ringSize,
+              marginLeft: -ringSize / 2,
+              marginTop: -ringSize / 2,
+              borderRadius: '50%',
+              border: '4px solid #FE7F2D',
+              opacity: Math.max(0, ringOp),
+            }}
+          />
+        );
+      })}
+
+      {/* Texture — diagonal hatch */}
+      <AbsoluteFill style={{ opacity: 0.07 }}>
+        {Array.from({ length: 30 }).map((_, i) => (
+          <div
+            key={`h-${i}`}
+            style={{
+              position: 'absolute',
+              top: -200 + i * 70,
+              left: 0,
+              width: '150%',
+              height: 1,
+              backgroundColor: '#FE7F2D',
+              transform: 'rotate(20deg)',
+              transformOrigin: 'left',
+            }}
+          />
+        ))}
+      </AbsoluteFill>
+
+      {/* Falling debris particles */}
+      {Array.from({ length: 25 }).map((_, i) => {
+        const seed = seededRandom(i + 100);
+        const x = seed * 1920;
+        const y = ((frame * 8 + i * 50) % 1200) - 100;
+        return (
+          <div
+            key={`d-${i}`}
+            style={{
+              position: 'absolute',
+              left: x,
+              top: y,
+              width: 4,
+              height: 4,
+              backgroundColor: '#FE7F2D',
+              opacity: 0.6,
+              transform: `rotate(${frame * 3 + i * 30}deg)`,
+            }}
+          />
+        );
+      })}
+
+      {/* Top Banner */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 60,
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+          opacity: titleOp,
+          transform: `translateY(${(1 - titleOp) * -30}px)`,
+        }}
+      >
+        <div
+          style={{
+            display: 'inline-block',
+            backgroundColor: '#FE7F2D',
+            color: '#1C1C1C',
+            fontFamily: 'Inter',
+            fontSize: 32,
+            fontWeight: 900,
+            padding: '10px 30px',
+            letterSpacing: 4,
+            animation: 'pulse 1s infinite',
+          }}
+        >
+          ⚠ CONFLICT ZONE
+        </div>
+        <div
+          style={{
+            fontFamily: 'Yantra One',
+            fontSize: 102,
+            fontWeight: 900,
+            color: '#B9F3FC',
+            marginTop: 14,
+            textShadow: '0 0 30px rgba(185, 243, 252, 0.4)',
+          }}
+        >
+          STRAIT OF HORMUZ
+        </div>
+      </div>
+
+      {/* Center — Strait Visual (narrow passage between two land masses) */}
+      <AbsoluteFill style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 80 }}>
+        <div
+          style={{
+            opacity: straitOp,
+            transform: `scale(${straitOp})`,
+            position: 'relative',
+            width: 900,
+            height: 320,
+          }}
+        >
+          {/* Land Top */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 110,
+              background: 'linear-gradient(180deg, #FE7F2D 0%, #B9434F 100%)',
+              clipPath: 'polygon(0 0, 100% 0, 100% 80%, 70% 100%, 30% 100%, 0 80%)',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: 20,
+                left: 40,
+                fontFamily: 'Inter',
+                fontSize: 28,
+                color: '#1C1C1C',
+                fontWeight: 800,
+                letterSpacing: 3,
+              }}
+            >
+              IRAN
+            </div>
+          </div>
+
+          {/* Land Bottom */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 110,
+              background: 'linear-gradient(0deg, #FE7F2D 0%, #B9434F 100%)',
+              clipPath: 'polygon(0 20%, 30% 0, 70% 0, 100% 20%, 100% 100%, 0 100%)',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 20,
+                right: 40,
+                fontFamily: 'Inter',
+                fontSize: 28,
+                color: '#1C1C1C',
+                fontWeight: 800,
+                letterSpacing: 3,
+              }}
+            >
+              OMAN · UAE
+            </div>
+          </div>
+
+          {/* Water (Strait) */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 110,
+              bottom: 110,
+              left: 0,
+              right: 0,
+              background: 'linear-gradient(90deg, #635985 0%, #B9F3FC 50%, #635985 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {/* Ship icon */}
+            <div
+              style={{
+                position: 'absolute',
+                left: `${((frame * 1.5) % 100)}%`,
+                transition: 'all',
+              }}
+            >
+              <svg width="80" height="40" viewBox="0 0 80 40">
+                <path d="M5 25 L75 25 L70 38 L10 38 Z" fill="#1C1C1C" />
+                <rect x="25" y="10" width="30" height="15" fill="#FE7F2D" />
+              </svg>
+            </div>
+            <div
+              style={{
+                fontFamily: 'Inter',
+                fontSize: 26,
+                color: '#1C1C1C',
+                fontWeight: 800,
+                letterSpacing: 4,
+                position: 'absolute',
+                bottom: 8,
+              }}
+            >
+              HORMUZ CHOKEPOINT
+            </div>
+          </div>
+        </div>
+      </AbsoluteFill>
+
+      {/* Bottom Stats Row */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 80,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          justifyContent: 'space-around',
+          alignItems: 'flex-end',
+        }}
+      >
+        {[
+          { val: '30%', label: 'FERTILIZER\nव्यापार', op: stat1Op, color: '#FE7F2D' },
+          { val: '20%', label: 'LNG GAS\nप्राकृतिक गैस', op: stat2Op, color: '#B9F3FC' },
+          { val: '27%', label: 'CRUDE OIL\nवैश्विक तेल', op: stat3Op, color: '#FFC107' },
+        ].map((s, i) => (
+          <div
+            key={i}
+            style={{
+              opacity: s.op,
+              transform: `translateY(${(1 - s.op) * 50}px)`,
+              textAlign: 'center',
+              backgroundColor: 'rgba(28, 28, 28, 0.85)',
+              padding: '20px 40px',
+              borderRadius: 8,
+              borderTop: `4px solid ${s.color}`,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: 'JetBrains Mono',
+                fontSize: 110,
+                fontWeight: 900,
+                color: s.color,
+                lineHeight: 1,
+              }}
+            >
+              {s.val}
+            </div>
+            <div
+              style={{
+                fontFamily: 'Noto Sans Devanagari',
+                fontSize: 26,
+                color: '#F5F5F5',
+                marginTop: 8,
+                whiteSpace: 'pre-line',
+                fontWeight: 600,
+              }}
+            >
+              {s.label}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Vignette */}
+      <AbsoluteFill
+        style={{
+          background: 'radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.7) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Watermark */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 30,
+          right: 45,
+          fontFamily: 'Inter',
+          fontSize: 22,
+          fontWeight: 600,
+          color: '#9E9E9E',
+          opacity: 0.3,
+        }}
+      >
+        ProBuffet HQ
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+export default Scene07_HormuzStrait;
+```
+
+```tsx
+import React from 'react';
+
+import { useCurrentFrame, useVideoConfig, interpolate, Easing, spring, AbsoluteFill } from 'remotion';
+
+export const compositionConfig = {
+  id: 'Scene08_PriceSurge',
+  durationInSeconds: 28,
+  fps: 30,
+  width: 1920,
+  height: 1080,
+};
+
+const seededRandom = (seed: number): number => {
+  const x = Math.sin(seed * 9999) * 10000;
+  return x - Math.floor(x);
+};
+
+const Scene08_PriceSurge: React.FC = () => {
+  const frame = useCurrentFrame();
+  const { fps, durationInFrames } = useVideoConfig();
+
+  const sp = (delay: number, config?: object) =>
+    spring({ frame: Math.max(0, frame - delay), fps, config: { damping: 12, mass: 0.4, stiffness: 120, ...config } });
+
+  const exitOp = interpolate(frame, [durationInFrames - 15, durationInFrames], [1, 0], {
+    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
+  });
+
+  const titleOp = sp(15);
+  const ureaCardOp = sp(50);
+  const ureaChartProgress = interpolate(sp(70), [0, 1], [0, 1]);
+  const ureaVal = interpolate(sp(80), [0, 1], [0, 30]);
+  const soyaCardOp = sp(160);
+  const soyaChartProgress = interpolate(sp(180), [0, 1], [0, 1]);
+
+  // Pan camera
+  const panY = interpolate(frame, [0, durationInFrames], [10, -10]);
+
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#635985', overflow: 'hidden', opacity: exitOp }}>
+      {/* Gradient */}
+      <AbsoluteFill
+        style={{
+          background: 'linear-gradient(135deg, #4A4068 0%, #635985 50%, #7B6FA8 100%)',
+        }}
+      />
+
+      {/* Shape Layer */}
+      {[0, 1, 2, 3].map((i) => (
+        <div
+          key={`s-${i}`}
+          style={{
+            position: 'absolute',
+            left: 150 + i * 450,
+            top: 80 + (i % 2) * 600,
+            width: 320,
+            height: 320,
+            borderRadius: i % 2 === 0 ? '50%' : '20%',
+            border: '2px solid #FE7F2D',
+            opacity: 0.05,
+            transform: `rotate(${frame * 0.08 + i * 40}deg)`,
+          }}
+        />
+      ))}
+
+      {/* Texture */}
+      <AbsoluteFill style={{ opacity: 0.05 }}>
+        {Array.from({ length: 20 }).map((_, i) => (
+          <div
+            key={`v-${i}`}
+            style={{
+              position: 'absolute',
+              left: i * 100,
+              top: 0,
+              width: 1,
+              height: '100%',
+              backgroundColor: '#B9F3FC',
+            }}
+          />
+        ))}
+      </AbsoluteFill>
 
       {/* Particles */}
       {Array.from({ length: 22 }).map((_, i) => {
-        const x = seededRandom(i + 13) * 1920;
-        const y = seededRandom(i + 95) * 1080;
+        const seed = seededRandom(i + 60);
+        const x = seed * 1920;
+        const y = (seededRandom(i + 160) * 1080 + frame * 0.5) % 1080;
         return (
-          <div key={i} style={{
-            position: 'absolute',
-            left: x + Math.sin((frame + i * 21) * 0.025) * 25,
-            top: y + Math.cos((frame + i * 19) * 0.025) * 22,
-            width: 5, height: 5,
-            background: '#1E2022', opacity: 0.35,
-            transform: `rotate(${frame * 2}deg)`,
-          }} />
+          <div
+            key={`p-${i}`}
+            style={{
+              position: 'absolute',
+              left: x,
+              top: y,
+              width: 3,
+              height: 3,
+              borderRadius: '50%',
+              backgroundColor: '#FE7F2D',
+              opacity: 0.4,
+            }}
+          />
         );
       })}
 
-      {/* Top warning banner */}
-      <div style={{
-        position: 'absolute', top: 100, left: 100,
-        opacity: warnIn,
-        transform: `translateX(${(1 - warnIn) * -40}px)`,
-        display: 'flex', alignItems: 'center', gap: 20,
-        background: '#1E2022', padding: '14px 28px',
-      }}>
-        <svg width="36" height="36" viewBox="0 0 36 36">
-          <polygon points="18,3 35,32 1,32" fill="#ff0000" stroke="#FBF5A7" strokeWidth="2" />
-          <text x="18" y="28" textAnchor="middle" fontSize="22" fontWeight="900" fill="#FBF5A7" fontFamily="Anton">!</text>
-        </svg>
-        <div style={{
-          fontFamily: 'Bricolage Grotesque', fontSize: 28,
-          color: '#FBF5A7', fontWeight: 700, letterSpacing: 3,
-          textTransform: 'uppercase',
-        }}>
-          Terrain miné · Attention
-        </div>
-      </div>
-
-      {/* Hero title */}
-      <div style={{
-        position: 'absolute', top: 180, left: 100, right: 100,
-        opacity: titleIn,
-        transform: `translateY(${(1 - titleIn) * 30}px)`,
-      }}>
-        <div style={{
-          fontFamily: 'Clash Display', fontSize: 100, fontWeight: 800,
-          color: '#1E2022', lineHeight: 1, letterSpacing: -2,
-        }}>
-          UNE SIMPLE LETTRE.
-        </div>
-        <div style={{
-          fontFamily: 'Bricolage Grotesque', fontSize: 36,
-          color: '#1E2022', fontStyle: 'italic', marginTop: 10,
-          opacity: 0.85,
-        }}>
-          Un seul caractère sur un papier. Et tout bascule.
-        </div>
-      </div>
-
-      {/* A D G letters BIG */}
-      <div style={{
-        position: 'absolute', top: 400, left: 100,
-        display: 'flex', gap: 30, alignItems: 'flex-end',
-      }}>
-        {[
-          { letter: 'A', anim: a, color: '#1E2022', bg: '#FBF5A7', label: 'TOP' },
-          { letter: 'D', anim: d, color: '#FBF5A7', bg: '#1E2022', label: 'MOYEN' },
-          { letter: 'G', anim: g, color: '#FBF5A7', bg: '#ff0000', label: 'DANGER' },
-        ].map((item, i) => (
-          <div key={i} style={{
-            opacity: item.anim,
-            transform: `translateY(${(1 - item.anim) * 80}px) scale(${item.anim})`,
-          }}>
-            <div style={{
-              width: 220, height: 280,
-              background: item.bg,
-              border: '6px solid #1E2022',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'Clash Display, sans-serif',
-              fontSize: 220, fontWeight: 900,
-              color: item.color, lineHeight: 1,
-              boxShadow: '0 20px 50px rgba(30,32,34,0.3)',
-            }}>
-              {item.letter}
-            </div>
-            <div style={{
-              marginTop: 12, textAlign: 'center',
-              fontFamily: 'Anton', fontSize: 32,
-              color: '#1E2022', letterSpacing: 3,
-            }}>
-              {item.label}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Arrow + value */}
-      <div style={{
-        position: 'absolute', top: 420, right: 100,
-        opacity: arrowIn,
-      }}>
-        <div style={{
-          fontFamily: 'Bricolage Grotesque', fontSize: 32,
-          color: '#1E2022', letterSpacing: 3, textTransform: 'uppercase',
-          fontWeight: 700, marginBottom: 16,
-        }}>
-          → Impact direct
-        </div>
-        <div style={{
-          fontFamily: 'Anton', fontSize: 54, color: '#1E2022',
-          lineHeight: 1, marginBottom: 24,
-        }}>
-          LA VALEUR DE<br/>
-          VOTRE LOGEMENT
-        </div>
-
-        <div style={{
-          background: '#1E2022',
-          padding: '30px 40px',
-          borderRadius: 12,
-          opacity: valueIn,
-          transform: `scale(${valueIn})`,
-        }}>
-          <div style={{
-            fontFamily: 'Montserrat', fontSize: 22,
-            color: '#FBF5A7', letterSpacing: 2,
-            textTransform: 'uppercase', marginBottom: 8,
-          }}>
-            Variation possible
-          </div>
-          <div style={{
-            fontFamily: 'Space Mono, monospace',
-            fontSize: 96, fontWeight: 700,
-            color: '#F4CE14', lineHeight: 1,
-          }}>
-            ±{formatted} €
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom note */}
-      <div style={{
-        position: 'absolute', bottom: 120, left: 100, right: 100,
-        textAlign: 'center',
-        opacity: footIn,
-        transform: `translateY(${(1 - footIn) * 20}px)`,
-        fontFamily: 'Bricolage Grotesque', fontSize: 32,
-        color: '#1E2022', fontStyle: 'italic',
-      }}>
-        Plusieurs dizaines de milliers d'euros · sur une seule lettre.
-      </div>
-
-      {/* Vignette */}
-      <AbsoluteFill style={{
-        boxShadow: 'inset 0 0 250px rgba(30,32,34,0.4)',
-        pointerEvents: 'none',
-      }} />
-
-      {/* Watermark */}
-      <div style={{
-        position: 'absolute', bottom: 30, right: 45,
-        fontFamily: 'Montserrat, sans-serif',
-        fontSize: 22, fontWeight: 600, color: '#1E2022',
-        opacity: 0.4, letterSpacing: 1,
-      }}>
-        Matures Finance
-      </div>
-    </AbsoluteFill>
-  );
-};
-
-export default Scene04_TerrainMine;
-```
-
-```tsx
-import React from 'react';
-
-import { useCurrentFrame, useVideoConfig, interpolate, Easing, spring, AbsoluteFill } from 'remotion';
-
-export const compositionConfig = {
-  id: 'Scene05_EtiquetteDPE',
-  durationInSeconds: 18,
-  fps: 30,
-  width: 1920,
-  height: 1080,
-};
-
-const seededRandom = (seed: number): number => {
-  const x = Math.sin(seed * 9999) * 10000;
-  return x - Math.floor(x);
-};
-
-const Scene05_EtiquetteDPE: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
-
-  const sp = (delay: number, config?: object) =>
-    spring({ frame: Math.max(0, frame - delay), fps, config: { damping: 12, mass: 0.4, stiffness: 120, ...config } });
-
-  const exitOp = interpolate(frame, [durationInFrames - 15, durationInFrames], [1, 0], {
-    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
-  });
-
-  const titleIn = sp(10);
-  const subIn = sp(50);
-
-  const labels = [
-    { l: 'A', color: '#00a651', width: 200 },
-    { l: 'B', color: '#50b848', width: 240 },
-    { l: 'C', color: '#aed136', width: 280 },
-    { l: 'D', color: '#fff200', width: 320 },
-    { l: 'E', color: '#fdb913', width: 360 },
-    { l: 'F', color: '#f37021', width: 400 },
-    { l: 'G', color: '#ed1c24', width: 440 },
-  ];
-
-  const leftIn = sp(120);
-  const rightIn = sp(160);
-
-  // Pointer sweep from A (top) to G (bottom)
-  const sweepProgress = interpolate(frame, [200, 380], [0, 6], { extrapolateRight: 'clamp' });
-  const sweepIdx = Math.floor(sweepProgress);
-  const sweepY = 200 + sweepIdx * 75;
-
-  return (
-    <AbsoluteFill style={{ backgroundColor: '#F4CE14', overflow: 'hidden', opacity: exitOp }}>
-      {/* Gradient */}
-      <AbsoluteFill style={{
-        background: 'radial-gradient(ellipse at 70% 50%, rgba(251,245,167,0.6) 0%, transparent 65%)',
-      }} />
-
-      {/* Shapes */}
-      <div style={{
-        position: 'absolute', top: '5%', right: '5%',
-        width: 350, height: 350,
-        border: '4px solid #1E2022', opacity: 0.07,
-        transform: `rotate(${frame * 0.2}deg)`,
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '-10%', left: '-5%',
-        width: 500, height: 500, borderRadius: '50%',
-        background: '#1E2022', opacity: 0.04,
-      }} />
-
-      {/* Wave texture */}
-      <svg width="1920" height="1080" style={{ position: 'absolute', opacity: 0.05 }}>
-        <defs>
-          <pattern id="wave5" width="60" height="20" patternUnits="userSpaceOnUse">
-            <path d="M 0 10 Q 15 0, 30 10 T 60 10" stroke="#1E2022" strokeWidth="1.5" fill="none" />
-          </pattern>
-        </defs>
-        <rect width="1920" height="1080" fill="url(#wave5)" />
-      </svg>
-
-      {/* Particles */}
-      {Array.from({ length: 18 }).map((_, i) => {
-        const x = seededRandom(i + 17) * 1920;
-        const y = seededRandom(i + 99) * 1080;
-        return (
-          <div key={i} style={{
+      <AbsoluteFill style={{ transform: `translateY(${panY}px)` }}>
+        {/* Title */}
+        <div
+          style={{
             position: 'absolute',
-            left: x + Math.sin((frame + i * 23) * 0.022) * 20,
-            top: y + Math.cos((frame + i * 16) * 0.022) * 20,
-            width: 4, height: 4, borderRadius: '50%',
-            background: '#1E2022', opacity: 0.3,
-          }} />
-        );
-      })}
-
-      {/* Title */}
-      <div style={{
-        position: 'absolute', top: 80, left: 100,
-        opacity: titleIn,
-        transform: `translateX(${(1 - titleIn) * -40}px)`,
-      }}>
-        <div style={{
-          fontFamily: 'Bricolage Grotesque', fontSize: 28,
-          color: '#1E2022', letterSpacing: 4, textTransform: 'uppercase',
-          fontWeight: 600, marginBottom: 12,
-        }}>
-          → Décodons l'étiquette
-        </div>
-        <div style={{
-          fontFamily: 'Clash Display', fontSize: 160, fontWeight: 800,
-          color: '#1E2022', lineHeight: 0.9, letterSpacing: -4,
-        }}>
-          LE DPE.
-        </div>
-        <div style={{
-          fontFamily: 'Montserrat', fontSize: 34, color: '#1E2022',
-          fontWeight: 500, marginTop: 10, opacity: subIn,
-          maxWidth: 900,
-        }}>
-          Diagnostic de Performance Énergétique
-        </div>
-      </div>
-
-      {/* LEFT side meaning */}
-      <div style={{
-        position: 'absolute', bottom: 120, left: 100, width: 700,
-        opacity: leftIn,
-        transform: `translateY(${(1 - leftIn) * 30}px)`,
-      }}>
-        <div style={{
-          display: 'flex', gap: 20, alignItems: 'flex-start', marginBottom: 30,
-        }}>
-          <div style={{
-            background: '#00a651', color: '#1E2022',
-            fontFamily: 'Clash Display', fontSize: 90, fontWeight: 900,
-            width: 110, height: 110,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            border: '4px solid #1E2022',
-          }}>A</div>
-          <div>
-            <div style={{
-              fontFamily: 'Anton', fontSize: 44, color: '#1E2022',
-              lineHeight: 1, letterSpacing: 1,
-            }}>
-              MERVEILLE
-            </div>
-            <div style={{
-              fontFamily: 'Montserrat', fontSize: 26, color: '#1E2022',
-              opacity: 0.8, marginTop: 6,
-            }}>
-              Efficacité maximale · Factures minimales
-            </div>
+            top: 60,
+            left: 0,
+            right: 0,
+            textAlign: 'center',
+            opacity: titleOp,
+            transform: `translateY(${(1 - titleOp) * -30}px)`,
+          }}
+        >
+          <div style={{ fontFamily: 'Inter', fontSize: 32, color: '#B9F3FC', letterSpacing: 5, fontWeight: 700 }}>
+            PRICE SURGE ALERT
+          </div>
+          <div
+            style={{
+              fontFamily: 'Yantra One',
+              fontSize: 102,
+              fontWeight: 900,
+              color: '#FE7F2D',
+              marginTop: 6,
+              textShadow: '0 0 30px rgba(254, 127, 45, 0.4)',
+            }}
+          >
+            कीमतें आसमान पर
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-          <div style={{
-            background: '#ed1c24', color: '#FBF5A7',
-            fontFamily: 'Clash Display', fontSize: 90, fontWeight: 900,
-            width: 110, height: 110,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            border: '4px solid #1E2022',
-          }}>G</div>
-          <div>
-            <div style={{
-              fontFamily: 'Anton', fontSize: 44, color: '#1E2022',
-              lineHeight: 1, letterSpacing: 1,
-            }}>
-              GOUFFRE
-            </div>
-            <div style={{
-              fontFamily: 'Montserrat', fontSize: 26, color: '#1E2022',
-              opacity: 0.8, marginTop: 6,
-            }}>
-              Énergivore · Pénalisé · Interdit location
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* RIGHT — DPE ladder visual */}
-      <div style={{
-        position: 'absolute', top: 180, right: 120,
-        opacity: rightIn,
-        transform: `translateX(${(1 - rightIn) * 50}px)`,
-      }}>
-        <div style={{
-          fontFamily: 'Bricolage Grotesque', fontSize: 22,
-          color: '#1E2022', letterSpacing: 3, textTransform: 'uppercase',
-          fontWeight: 600, marginBottom: 18, textAlign: 'right',
-        }}>
-          Étiquette officielle
-        </div>
-        <div style={{ position: 'relative' }}>
-          {labels.map((item, i) => {
-            const rowIn = sp(140 + i * 18, { damping: 14 });
-            return (
-              <div key={i} style={{
-                display: 'flex', alignItems: 'center',
-                marginBottom: 8,
-                opacity: rowIn,
-                transform: `translateX(${(1 - rowIn) * 60}px)`,
-              }}>
-                {/* Arrow bar */}
-                <div style={{
-                  background: item.color,
-                  width: item.width,
-                  height: 65,
-                  clipPath: 'polygon(0% 0%, calc(100% - 35px) 0%, 100% 50%, calc(100% - 35px) 100%, 0% 100%)',
-                  display: 'flex', alignItems: 'center', paddingLeft: 25,
-                  fontFamily: 'Anton', fontSize: 44, fontWeight: 900,
-                  color: item.l === 'D' ? '#1E2022' : (i < 3 ? '#1E2022' : '#FBF5A7'),
-                  border: 'none',
-                  position: 'relative',
-                }}>
-                  {item.l}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Pointer */}
-          <div style={{
+        {/* Two Cards */}
+        <div
+          style={{
             position: 'absolute',
-            left: -60, top: sweepY - 30,
-            transition: 'top 0.3s',
-            opacity: interpolate(frame, [200, 220], [0, 1]),
-          }}>
-            <svg width="50" height="50" viewBox="0 0 50 50">
-              <polygon points="0,25 45,5 45,45" fill="#1E2022" />
+            top: 280,
+            left: 0,
+            right: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 60,
+          }}
+        >
+          {/* UREA CARD */}
+          <div
+            style={{
+              opacity: ureaCardOp,
+              transform: `translateX(${(1 - ureaCardOp) * -100}px)`,
+              width: 660,
+              backgroundColor: 'rgba(28, 28, 28, 0.85)',
+              borderRadius: 16,
+              padding: 40,
+              border: '3px solid #FE7F2D',
+              boxShadow: '0 0 40px rgba(254, 127, 45, 0.3)',
+            }}
+          >
+            <div style={{ fontFamily: 'Inter', fontSize: 26, color: '#B9F3FC', letterSpacing: 4, fontWeight: 700 }}>
+              UREA · 1 MONTH
+            </div>
+            <div
+              style={{
+                fontFamily: 'Yantra One',
+                fontSize: 80,
+                color: '#FE7F2D',
+                fontWeight: 900,
+                marginTop: 4,
+              }}
+            >
+              यूरिया
+            </div>
+
+            {/* Mini Chart */}
+            <svg width="580" height="180" viewBox="0 0 580 180" style={{ marginTop: 20 }}>
+              <line x1="0" y1="170" x2="580" y2="170" stroke="#B9F3FC" strokeWidth="2" opacity="0.3" />
+              <path
+                d={`M0 150 L${100 * ureaChartProgress} 145 L${200 * ureaChartProgress} 130 L${300 * ureaChartProgress} 110 L${420 * ureaChartProgress} 70 L${560 * ureaChartProgress} 25`}
+                stroke="#FE7F2D"
+                strokeWidth="6"
+                fill="none"
+                strokeLinecap="round"
+              />
+              <path
+                d={`M0 150 L${100 * ureaChartProgress} 145 L${200 * ureaChartProgress} 130 L${300 * ureaChartProgress} 110 L${420 * ureaChartProgress} 70 L${560 * ureaChartProgress} 25 L${560 * ureaChartProgress} 170 L0 170 Z`}
+                fill="url(#ureaGrad)"
+                opacity="0.3"
+              />
+              <defs>
+                <linearGradient id="ureaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#FE7F2D" />
+                  <stop offset="100%" stopColor="#FE7F2D" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <circle
+                cx={560 * ureaChartProgress}
+                cy={25}
+                r="10"
+                fill="#FE7F2D"
+                style={{ filter: 'drop-shadow(0 0 10px #FE7F2D)' }}
+              />
             </svg>
+
+            <div
+              style={{
+                fontFamily: 'JetBrains Mono',
+                fontSize: 165,
+                fontWeight: 900,
+                color: '#FE7F2D',
+                marginTop: 10,
+                lineHeight: 1,
+              }}
+            >
+              +{Math.round(ureaVal)}%
+            </div>
+          </div>
+
+          {/* SOYA OIL CARD */}
+          <div
+            style={{
+              opacity: soyaCardOp,
+              transform: `translateX(${(1 - soyaCardOp) * 100}px)`,
+              width: 660,
+              backgroundColor: 'rgba(28, 28, 28, 0.85)',
+              borderRadius: 16,
+              padding: 40,
+              border: '3px solid #B9F3FC',
+              boxShadow: '0 0 40px rgba(185, 243, 252, 0.3)',
+            }}
+          >
+            <div style={{ fontFamily: 'Inter', fontSize: 26, color: '#FE7F2D', letterSpacing: 4, fontWeight: 700 }}>
+              SOYA BEAN OIL · 2Y HIGH
+            </div>
+            <div
+              style={{
+                fontFamily: 'Yantra One',
+                fontSize: 80,
+                color: '#B9F3FC',
+                fontWeight: 900,
+                marginTop: 4,
+              }}
+            >
+              सोया तेल
+            </div>
+
+            {/* Mini Chart */}
+            <svg width="580" height="180" viewBox="0 0 580 180" style={{ marginTop: 20 }}>
+              <line x1="0" y1="170" x2="580" y2="170" stroke="#FE7F2D" strokeWidth="2" opacity="0.3" />
+              <path
+                d={`M0 130 L${80 * soyaChartProgress} 140 L${160 * soyaChartProgress} 120 L${240 * soyaChartProgress} 105 L${340 * soyaChartProgress} 90 L${440 * soyaChartProgress} 55 L${560 * soyaChartProgress} 15`}
+                stroke="#B9F3FC"
+                strokeWidth="6"
+                fill="none"
+                strokeLinecap="round"
+              />
+              <circle
+                cx={560 * soyaChartProgress}
+                cy={15}
+                r="10"
+                fill="#B9F3FC"
+                style={{ filter: 'drop-shadow(0 0 10px #B9F3FC)' }}
+              />
+              <text x="500" y="50" fill="#B9F3FC" fontSize="22" fontWeight="800" fontFamily="JetBrains Mono">
+                ALL-TIME ZONE
+              </text>
+            </svg>
+
+            <div
+              style={{
+                fontFamily: 'JetBrains Mono',
+                fontSize: 95,
+                fontWeight: 900,
+                color: '#B9F3FC',
+                marginTop: 10,
+                lineHeight: 1,
+              }}
+            >
+              2-YEAR HIGH
+            </div>
           </div>
         </div>
-      </div>
+      </AbsoluteFill>
 
       {/* Vignette */}
-      <AbsoluteFill style={{
-        boxShadow: 'inset 0 0 250px rgba(30,32,34,0.4)',
-        pointerEvents: 'none',
-      }} />
+      <AbsoluteFill
+        style={{
+          background: 'radial-gradient(circle at center, transparent 50%, rgba(0,0,0,0.6) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
 
       {/* Watermark */}
-      <div style={{
-        position: 'absolute', bottom: 30, right: 45,
-        fontFamily: 'Montserrat, sans-serif',
-        fontSize: 22, fontWeight: 600, color: '#1E2022',
-        opacity: 0.4, letterSpacing: 1,
-      }}>
-        Matures Finance
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 30,
+          right: 45,
+          fontFamily: 'Inter',
+          fontSize: 22,
+          fontWeight: 600,
+          color: '#9E9E9E',
+          opacity: 0.3,
+        }}
+      >
+        ProBuffet HQ
       </div>
     </AbsoluteFill>
   );
 };
 
-export default Scene05_EtiquetteDPE;
+export default Scene08_PriceSurge;
 ```
 
 ```tsx
@@ -1317,8 +2435,8 @@ import React from 'react';
 import { useCurrentFrame, useVideoConfig, interpolate, Easing, spring, AbsoluteFill } from 'remotion';
 
 export const compositionConfig = {
-  id: 'Scene06_Stat70',
-  durationInSeconds: 18,
+  id: 'Scene09_FarmerDilemma',
+  durationInSeconds: 27,
   fps: 30,
   width: 1920,
   height: 1080,
@@ -1329,7 +2447,7 @@ const seededRandom = (seed: number): number => {
   return x - Math.floor(x);
 };
 
-const Scene06_Stat70: React.FC = () => {
+const Scene09_FarmerDilemma: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
 
@@ -1340,231 +2458,281 @@ const Scene06_Stat70: React.FC = () => {
     extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
   });
 
-  const oldIn = sp(10);
-  const strike = interpolate(frame, [50, 90], [0, 1], { extrapolateRight: 'clamp' });
-
-  const newIn = sp(100);
-
-  // Donut / pie chart
-  const pctRaw = interpolate(frame, [150, 280], [0, 70], { extrapolateRight: 'clamp' });
-  const pct = Math.floor(pctRaw);
-
-  // SVG arc
-  const radius = 180;
-  const circumference = 2 * Math.PI * radius;
-  const dashOffset = circumference - (pct / 100) * circumference;
-
-  const peopleIn = sp(300);
-  const decisiveIn = sp(360);
+  const titleOp = sp(15);
+  const questOp = sp(50);
+  const pathAOp = sp(110);
+  const pathBOp = sp(170);
+  const arrowDownOp = sp(220);
+  const billOp = sp(260);
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#F4CE14', overflow: 'hidden', opacity: exitOp }}>
+    <AbsoluteFill style={{ backgroundColor: '#635985', overflow: 'hidden', opacity: exitOp }}>
       {/* Gradient */}
-      <AbsoluteFill style={{
-        background: 'linear-gradient(225deg, rgba(244,206,20,1) 0%, rgba(251,245,167,0.7) 100%)',
-      }} />
+      <AbsoluteFill
+        style={{
+          background: 'linear-gradient(180deg, #7B6FA8 0%, #635985 50%, #4A4068 100%)',
+        }}
+      />
 
-      {/* Shape layers */}
-      <div style={{
-        position: 'absolute', top: '8%', left: '5%',
-        width: 380, height: 380,
-        background: '#1E2022', opacity: 0.05,
-        transform: `rotate(${frame * 0.18}deg)`,
-        clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '5%', right: '8%',
-        width: 280, height: 280, borderRadius: '50%',
-        border: '3px solid #1E2022', opacity: 0.1,
-        transform: `scale(${1 + Math.sin(frame * 0.04) * 0.06})`,
-      }} />
+      {/* Shape Layer */}
+      {[0, 1, 2].map((i) => (
+        <div
+          key={`sh-${i}`}
+          style={{
+            position: 'absolute',
+            left: 100 + i * 700,
+            top: 100 + (i % 2) * 600,
+            width: 300,
+            height: 300,
+            border: '2px solid #B9F3FC',
+            borderRadius: '50%',
+            opacity: 0.05,
+            transform: `scale(${1 + Math.sin(frame * 0.015 + i) * 0.08})`,
+          }}
+        />
+      ))}
 
-      {/* Grid texture */}
-      <svg width="1920" height="1080" style={{ position: 'absolute', opacity: 0.07 }}>
-        <defs>
-          <pattern id="grid6" width="100" height="100" patternUnits="userSpaceOnUse">
-            <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#1E2022" strokeWidth="1" />
-          </pattern>
-        </defs>
-        <rect width="1920" height="1080" fill="url(#grid6)" />
-      </svg>
+      {/* Texture */}
+      <AbsoluteFill style={{ opacity: 0.04 }}>
+        {Array.from({ length: 25 }).map((_, i) => (
+          <div
+            key={`d-${i}`}
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: i * 50,
+              width: '100%',
+              height: 1,
+              backgroundColor: '#B9F3FC',
+            }}
+          />
+        ))}
+      </AbsoluteFill>
 
       {/* Particles */}
       {Array.from({ length: 20 }).map((_, i) => {
-        const x = seededRandom(i + 21) * 1920;
-        const y = seededRandom(i + 110) * 1080;
+        const seed = seededRandom(i + 90);
+        const x = (seed * 1920 + frame * 0.4) % 1920;
+        const y = seededRandom(i + 190) * 1080;
         return (
-          <div key={i} style={{
-            position: 'absolute',
-            left: x + Math.sin((frame + i * 24) * 0.024) * 22,
-            top: y + Math.cos((frame + i * 17) * 0.024) * 20,
-            width: 5, height: 5, borderRadius: '50%',
-            background: i % 3 === 0 ? '#ff0000' : '#1E2022',
-            opacity: 0.35,
-          }} />
+          <div
+            key={`p-${i}`}
+            style={{
+              position: 'absolute',
+              left: x,
+              top: y,
+              width: 3,
+              height: 3,
+              borderRadius: '50%',
+              backgroundColor: '#FE7F2D',
+              opacity: 0.4,
+            }}
+          />
         );
       })}
 
-      {/* Old / Crossed */}
-      <div style={{
-        position: 'absolute', top: 90, left: 100,
-        opacity: oldIn,
-        transform: `translateX(${(1 - oldIn) * -30}px)`,
-      }}>
-        <div style={{
-          fontFamily: 'Bricolage Grotesque', fontSize: 24,
-          color: '#1E2022', letterSpacing: 3, textTransform: 'uppercase',
-          fontWeight: 600, marginBottom: 8, opacity: 0.7,
-        }}>
-          Avant 2026
+      {/* Title */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 50,
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+          opacity: titleOp,
+          transform: `translateY(${(1 - titleOp) * -30}px)`,
+        }}
+      >
+        <div style={{ fontFamily: 'Inter', fontSize: 32, color: '#FE7F2D', letterSpacing: 6, fontWeight: 700 }}>
+          THE FARMER'S DILEMMA
         </div>
-        <div style={{ position: 'relative', display: 'inline-block' }}>
-          <div style={{
-            fontFamily: 'Anton', fontSize: 72, color: '#1E2022',
-            letterSpacing: 1, opacity: 0.5, lineHeight: 1,
-          }}>
-            « SIMPLE FORMALITÉ »
+        <div
+          style={{
+            fontFamily: 'Yantra One',
+            fontSize: 95,
+            fontWeight: 900,
+            color: '#B9F3FC',
+            marginTop: 6,
+          }}
+        >
+          किसान क्या करेगा?
+        </div>
+      </div>
+
+      {/* Central Question — 30% Badge */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 280,
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+          opacity: questOp,
+          transform: `scale(${questOp})`,
+        }}
+      >
+        <div
+          style={{
+            display: 'inline-block',
+            backgroundColor: '#FE7F2D',
+            color: '#1C1C1C',
+            fontFamily: 'JetBrains Mono',
+            fontSize: 85,
+            fontWeight: 900,
+            padding: '12px 50px',
+            borderRadius: 10,
+            boxShadow: '0 0 40px rgba(254, 127, 45, 0.5)',
+          }}
+        >
+          खाद +30% महंगी
+        </div>
+      </div>
+
+      {/* Two Paths — Fork */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 470,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 100,
+        }}
+      >
+        {/* PATH A — Use Less */}
+        <div
+          style={{
+            opacity: pathAOp,
+            transform: `translateY(${(1 - pathAOp) * 50}px) translateX(${(1 - pathAOp) * -80}px)`,
+            width: 480,
+            backgroundColor: 'rgba(185, 243, 252, 0.12)',
+            border: '3px solid #B9F3FC',
+            borderRadius: 14,
+            padding: 30,
+            textAlign: 'center',
+          }}
+        >
+          <div style={{ fontFamily: 'Inter', fontSize: 28, color: '#FE7F2D', fontWeight: 800, letterSpacing: 3 }}>
+            PATH A
           </div>
-          <div style={{
-            position: 'absolute', top: '50%', left: 0,
-            height: 8, background: '#ff0000',
-            width: `${strike * 100}%`,
-            transform: 'translateY(-50%)',
-          }} />
+          {/* Down arrow icon */}
+          <svg width="80" height="80" viewBox="0 0 80 80" style={{ margin: '14px auto' }}>
+            <polygon points="20,10 60,10 60,45 75,45 40,75 5,45 20,45" fill="#B9F3FC" />
+          </svg>
+          <div style={{ fontFamily: 'Yantra One', fontSize: 55, color: '#B9F3FC', fontWeight: 900 }}>
+            कम खाद डालेगा
+          </div>
+          <div style={{ fontFamily: 'Noto Sans Devanagari', fontSize: 36, color: '#F5F5F5', marginTop: 8, fontWeight: 600 }}>
+            उपज गिरेगी
+          </div>
+        </div>
+
+        {/* PATH B — Pay More */}
+        <div
+          style={{
+            opacity: pathBOp,
+            transform: `translateY(${(1 - pathBOp) * 50}px) translateX(${(1 - pathBOp) * 80}px)`,
+            width: 480,
+            backgroundColor: 'rgba(254, 127, 45, 0.18)',
+            border: '3px solid #FE7F2D',
+            borderRadius: 14,
+            padding: 30,
+            textAlign: 'center',
+          }}
+        >
+          <div style={{ fontFamily: 'Inter', fontSize: 28, color: '#B9F3FC', fontWeight: 800, letterSpacing: 3 }}>
+            PATH B
+          </div>
+          {/* Up arrow icon */}
+          <svg width="80" height="80" viewBox="0 0 80 80" style={{ margin: '14px auto' }}>
+            <polygon points="40,5 75,35 60,35 60,75 20,75 20,35 5,35" fill="#FE7F2D" />
+          </svg>
+          <div style={{ fontFamily: 'Yantra One', fontSize: 55, color: '#FE7F2D', fontWeight: 900 }}>
+            महंगी खरीदेगा
+          </div>
+          <div style={{ fontFamily: 'Noto Sans Devanagari', fontSize: 36, color: '#F5F5F5', marginTop: 8, fontWeight: 600 }}>
+            लागत बढ़ेगी
+          </div>
         </div>
       </div>
 
-      {/* Big title */}
-      <div style={{
-        position: 'absolute', top: 230, left: 100, right: 100,
-        opacity: newIn,
-        transform: `translateY(${(1 - newIn) * 30}px)`,
-      }}>
-        <div style={{
-          fontFamily: 'Clash Display', fontSize: 130, fontWeight: 800,
-          color: '#1E2022', lineHeight: 0.95, letterSpacing: -3,
-        }}>
-          CETTE ÉPOQUE EST
+      {/* Bottom — Both arrows converge to BILL */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 70,
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+          opacity: arrowDownOp,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: 'Inter',
+            fontSize: 30,
+            color: '#B9F3FC',
+            letterSpacing: 4,
+            marginBottom: 10,
+            fontWeight: 700,
+          }}
+        >
+          BOTH ROADS LEAD TO →
         </div>
-        <div style={{
-          fontFamily: 'Clash Display', fontSize: 130, fontWeight: 800,
-          lineHeight: 0.95, letterSpacing: -3,
-          background: '#1E2022', color: '#F4CE14',
-          display: 'inline-block', padding: '0 24px', marginTop: 8,
-        }}>
-          RÉVOLUE.
-        </div>
-      </div>
-
-      {/* LEFT — Donut chart */}
-      <div style={{
-        position: 'absolute', bottom: 80, left: 120,
-      }}>
-        <svg width="440" height="440">
-          {/* Background ring */}
-          <circle
-            cx="220" cy="220" r={radius}
-            fill="none" stroke="#1E2022" strokeWidth="35"
-            opacity="0.15"
-          />
-          {/* Progress ring */}
-          <circle
-            cx="220" cy="220" r={radius}
-            fill="none" stroke="#1E2022" strokeWidth="35"
-            strokeDasharray={circumference}
-            strokeDashoffset={dashOffset}
-            strokeLinecap="round"
-            transform="rotate(-90 220 220)"
-          />
-          <text
-            x="220" y="225"
-            textAnchor="middle"
-            fontFamily="Clash Display, sans-serif"
-            fontSize="140" fontWeight="900"
-            fill="#1E2022"
+        <div
+          style={{
+            display: 'inline-block',
+            backgroundColor: '#1C1C1C',
+            border: '4px solid #FE7F2D',
+            padding: '18px 50px',
+            opacity: billOp,
+            transform: `scale(${billOp}) translateY(${Math.sin(frame * 0.1) * 4}px)`,
+            borderRadius: 8,
+            boxShadow: '0 0 40px rgba(254, 127, 45, 0.6)',
+          }}
+        >
+          <span
+            style={{
+              fontFamily: 'Yantra One',
+              fontSize: 72,
+              color: '#FE7F2D',
+              fontWeight: 900,
+            }}
           >
-            {pct}%
-          </text>
-          <text
-            x="220" y="285"
-            textAnchor="middle"
-            fontFamily="Bricolage Grotesque, sans-serif"
-            fontSize="26" fontWeight="600"
-            fill="#1E2022"
-            letterSpacing="3"
-          >
-            DES ACHETEURS
-          </text>
-        </svg>
-      </div>
-
-      {/* RIGHT — Decisive label */}
-      <div style={{
-        position: 'absolute', bottom: 150, right: 100, width: 750,
-        opacity: peopleIn,
-        transform: `translateX(${(1 - peopleIn) * 40}px)`,
-      }}>
-        {/* People row */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 30, flexWrap: 'wrap' }}>
-          {Array.from({ length: 10 }).map((_, i) => {
-            const filled = i < 7;
-            return (
-              <svg key={i} width="60" height="80" viewBox="0 0 60 80">
-                <circle cx="30" cy="20" r="14" fill={filled ? '#1E2022' : 'none'} stroke="#1E2022" strokeWidth="3" />
-                <path d="M 10 75 Q 10 45, 30 45 Q 50 45, 50 75 Z" fill={filled ? '#1E2022' : 'none'} stroke="#1E2022" strokeWidth="3" />
-              </svg>
-            );
-          })}
-        </div>
-
-        <div style={{
-          opacity: decisiveIn,
-          transform: `translateY(${(1 - decisiveIn) * 20}px)`,
-        }}>
-          <div style={{
-            fontFamily: 'Anton', fontSize: 70, color: '#1E2022',
-            lineHeight: 1, letterSpacing: 1,
-          }}>
-            CRITÈRE
-          </div>
-          <div style={{
-            fontFamily: 'Anton', fontSize: 70,
-            lineHeight: 1, letterSpacing: 1,
-            background: '#ff0000', color: '#FBF5A7',
-            display: 'inline-block', padding: '4px 20px', marginTop: 6,
-          }}>
-            DÉCISIF.
-          </div>
-          <div style={{
-            fontFamily: 'Montserrat', fontSize: 26, color: '#1E2022',
-            fontWeight: 500, marginTop: 20, lineHeight: 1.3,
-          }}>
-            7 acheteurs sur 10 regardent le DPE<br/>
-            avant même de visiter.
-          </div>
+            बिल → आपकी जेब
+          </span>
         </div>
       </div>
 
       {/* Vignette */}
-      <AbsoluteFill style={{
-        boxShadow: 'inset 0 0 250px rgba(30,32,34,0.4)',
-        pointerEvents: 'none',
-      }} />
+      <AbsoluteFill
+        style={{
+          background: 'radial-gradient(circle at center, transparent 45%, rgba(0,0,0,0.6) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
 
       {/* Watermark */}
-      <div style={{
-        position: 'absolute', bottom: 30, right: 45,
-        fontFamily: 'Montserrat, sans-serif',
-        fontSize: 22, fontWeight: 600, color: '#1E2022',
-        opacity: 0.4, letterSpacing: 1,
-      }}>
-        Matures Finance
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 30,
+          right: 45,
+          fontFamily: 'Inter',
+          fontSize: 22,
+          fontWeight: 600,
+          color: '#9E9E9E',
+          opacity: 0.3,
+        }}
+      >
+        ProBuffet HQ
       </div>
     </AbsoluteFill>
   );
 };
 
-export default Scene06_Stat70;
+export default Scene09_FarmerDilemma;
 ```
 
 ```tsx
@@ -1573,8 +2741,8 @@ import React from 'react';
 import { useCurrentFrame, useVideoConfig, interpolate, Easing, spring, AbsoluteFill } from 'remotion';
 
 export const compositionConfig = {
-  id: 'Scene07_Ecart28',
-  durationInSeconds: 18,
+  id: 'Scene10_CrudeReveal',
+  durationInSeconds: 28,
   fps: 30,
   width: 1920,
   height: 1080,
@@ -1585,7 +2753,7 @@ const seededRandom = (seed: number): number => {
   return x - Math.floor(x);
 };
 
-const Scene07_Ecart28: React.FC = () => {
+const Scene10_CrudeReveal: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
 
@@ -1596,966 +2764,327 @@ const Scene07_Ecart28: React.FC = () => {
     extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
   });
 
-  const titleIn = sp(10);
+  const titleOp = sp(15);
+  const mandiOp = sp(50);
+  const veg1Op = sp(80);
+  const veg2Op = sp(105);
+  const veg3Op = sp(130);
+  const arrowOp = sp(170);
+  const layer2Op = sp(220);
+  const crudeIconOp = sp(260);
 
-  // Bars
-  const barA = interpolate(frame, [50, 130], [0, 1], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
-  const barG = interpolate(frame, [80, 170], [0, 0.72], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
-
-  const labelAIn = sp(140);
-  const labelGIn = sp(180);
-
-  const pctRaw = interpolate(frame, [200, 320], [0, 28], { extrapolateRight: 'clamp' });
-  const pct = Math.floor(pctRaw);
-
-  const m2Raw = interpolate(frame, [320, 430], [0, 1000], { extrapolateRight: 'clamp' });
-  const m2 = Math.floor(m2Raw / 50) * 50;
-  const m2In = sp(320);
+  // Camera zoom progressive
+  const zoom = interpolate(frame, [0, 200, durationInFrames], [1, 1.0, 1.15]);
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#F4CE14', overflow: 'hidden', opacity: exitOp }}>
+    <AbsoluteFill style={{ backgroundColor: '#635985', overflow: 'hidden', opacity: exitOp }}>
       {/* Gradient */}
-      <AbsoluteFill style={{
-        background: 'radial-gradient(ellipse at 50% 80%, rgba(251,245,167,0.5) 0%, transparent 65%)',
-      }} />
+      <AbsoluteFill
+        style={{
+          background: 'radial-gradient(ellipse at 70% 50%, #7B6FA8 0%, #635985 50%, #3D3654 100%)',
+        }}
+      />
 
-      {/* Shapes */}
-      <div style={{
-        position: 'absolute', top: '-8%', right: '-5%',
-        width: 500, height: 500,
-        background: '#1E2022', opacity: 0.04,
-        transform: `rotate(${frame * 0.15}deg)`,
-        clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '-10%', left: '-5%',
-        width: 450, height: 450, borderRadius: '50%',
-        border: '4px solid #1E2022', opacity: 0.08,
-      }} />
+      {/* Shape Layer */}
+      {[0, 1, 2, 3].map((i) => (
+        <div
+          key={`shp-${i}`}
+          style={{
+            position: 'absolute',
+            left: i * 480,
+            top: 50 + (i % 2) * 700,
+            width: 380,
+            height: 380,
+            borderRadius: i % 2 === 0 ? '50%' : '15%',
+            border: '2px solid #FE7F2D',
+            opacity: 0.05,
+            transform: `rotate(${frame * 0.06 + i * 25}deg)`,
+          }}
+        />
+      ))}
 
-      {/* Hatched texture */}
-      <svg width="1920" height="1080" style={{ position: 'absolute', opacity: 0.05 }}>
-        <defs>
-          <pattern id="hatch7" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
-            <line x1="0" y1="0" x2="0" y2="20" stroke="#1E2022" strokeWidth="1" />
-          </pattern>
-        </defs>
-        <rect width="1920" height="1080" fill="url(#hatch7)" />
-      </svg>
+      {/* Texture — dots grid */}
+      <AbsoluteFill style={{ opacity: 0.07 }}>
+        {Array.from({ length: 60 }).map((_, i) => {
+          const x = (i % 12) * 160 + 80;
+          const y = Math.floor(i / 12) * 200 + 80;
+          return (
+            <div
+              key={`dot-${i}`}
+              style={{
+                position: 'absolute',
+                left: x,
+                top: y,
+                width: 3,
+                height: 3,
+                borderRadius: '50%',
+                backgroundColor: '#B9F3FC',
+              }}
+            />
+          );
+        })}
+      </AbsoluteFill>
 
       {/* Particles */}
-      {Array.from({ length: 16 }).map((_, i) => {
-        const x = seededRandom(i + 31) * 1920;
-        const y = seededRandom(i + 130) * 1080;
+      {Array.from({ length: 22 }).map((_, i) => {
+        const seed = seededRandom(i + 110);
+        const x = seed * 1920;
+        const y = (seededRandom(i + 210) * 1080 + frame * 0.5) % 1080;
         return (
-          <div key={i} style={{
-            position: 'absolute',
-            left: x + Math.sin((frame + i * 20) * 0.023) * 22,
-            top: y + Math.cos((frame + i * 18) * 0.023) * 18,
-            width: 5, height: 5, borderRadius: '50%',
-            background: '#1E2022', opacity: 0.3,
-          }} />
+          <div
+            key={`p-${i}`}
+            style={{
+              position: 'absolute',
+              left: x,
+              top: y,
+              width: 3,
+              height: 3,
+              borderRadius: '50%',
+              backgroundColor: '#FE7F2D',
+              opacity: 0.35,
+            }}
+          />
         );
       })}
 
-      {/* Top title */}
-      <div style={{
-        position: 'absolute', top: 70, left: 100, right: 100,
-        opacity: titleIn,
-        transform: `translateY(${(1 - titleIn) * -20}px)`,
-      }}>
-        <div style={{
-          fontFamily: 'Bricolage Grotesque', fontSize: 26,
-          color: '#1E2022', letterSpacing: 4, textTransform: 'uppercase',
-          fontWeight: 600, marginBottom: 10,
-        }}>
-          → L'écart de valeur
-        </div>
-        <div style={{
-          fontFamily: 'Clash Display', fontSize: 96, fontWeight: 800,
-          color: '#1E2022', lineHeight: 1, letterSpacing: -2,
-        }}>
-          Un bien bien noté. <span style={{ fontStyle: 'italic', color: '#ff0000' }}>vs</span> un bien mal noté.
-        </div>
-      </div>
-
-      {/* Bars container */}
-      <div style={{
-        position: 'absolute', bottom: 220, left: 100,
-        display: 'flex', alignItems: 'flex-end', gap: 60,
-        height: 500,
-      }}>
-        {/* Bar A */}
-        <div style={{ textAlign: 'center' }}>
-          <div style={{
-            width: 260, height: 500 * barA,
-            background: '#00a651',
-            border: '5px solid #1E2022',
-            position: 'relative',
-            transformOrigin: 'bottom',
-          }}>
-            <div style={{
-              position: 'absolute', top: 20, left: 0, right: 0,
-              textAlign: 'center',
-              fontFamily: 'Clash Display', fontSize: 130, fontWeight: 900,
-              color: '#FBF5A7', lineHeight: 1,
-              opacity: labelAIn,
-            }}>
-              A
-            </div>
-            <div style={{
-              position: 'absolute', bottom: 20, left: 0, right: 0,
-              textAlign: 'center',
-              fontFamily: 'Anton', fontSize: 36, color: '#1E2022',
-              opacity: labelAIn,
-            }}>
-              100%
-            </div>
+      <AbsoluteFill style={{ transform: `scale(${zoom})` }}>
+        {/* Title */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 60,
+            left: 0,
+            right: 0,
+            textAlign: 'center',
+            opacity: titleOp,
+            transform: `translateY(${(1 - titleOp) * -30}px)`,
+          }}
+        >
+          <div style={{ fontFamily: 'Inter', fontSize: 30, color: '#B9F3FC', letterSpacing: 5, fontWeight: 700 }}>
+            FROM FARM → MANDI → PLATE
           </div>
-          <div style={{
-            marginTop: 16,
-            fontFamily: 'Montserrat', fontSize: 24, color: '#1E2022',
-            fontWeight: 600, letterSpacing: 1, opacity: labelAIn,
-          }}>
-            VALEUR PLEINE
+          <div
+            style={{
+              fontFamily: 'Yantra One',
+              fontSize: 95,
+              fontWeight: 900,
+              color: '#FE7F2D',
+              marginTop: 6,
+              textShadow: '0 0 30px rgba(254, 127, 45, 0.4)',
+            }}
+          >
+            मंडी में लागत जुड़ती है
           </div>
         </div>
 
-        {/* Bar G */}
-        <div style={{ textAlign: 'center' }}>
-          <div style={{
-            width: 260, height: 500 * barG,
-            background: '#ed1c24',
-            border: '5px solid #1E2022',
-            position: 'relative',
-          }}>
-            <div style={{
-              position: 'absolute', top: 20, left: 0, right: 0,
+        {/* Mandi Veg Row */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 280,
+            left: 0,
+            right: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 60,
+            opacity: mandiOp,
+          }}
+        >
+          {/* Tomato */}
+          <div
+            style={{
+              opacity: veg1Op,
+              transform: `translateY(${(1 - veg1Op) * 60}px)`,
               textAlign: 'center',
-              fontFamily: 'Clash Display', fontSize: 130, fontWeight: 900,
-              color: '#FBF5A7', lineHeight: 1,
-              opacity: labelGIn,
-            }}>
-              G
+            }}
+          >
+            <svg width="160" height="160" viewBox="0 0 160 160">
+              <circle cx="80" cy="90" r="55" fill="#FE7F2D" />
+              <path d="M70 35 Q80 25 90 35 L95 50 L65 50 Z" fill="#B9F3FC" />
+              <ellipse cx="65" cy="80" rx="10" ry="6" fill="#FFC107" opacity="0.6" />
+            </svg>
+            <div style={{ fontFamily: 'Yantra One', fontSize: 38, color: '#B9F3FC', fontWeight: 800, marginTop: 6 }}>
+              टमाटर
             </div>
-            <div style={{
-              position: 'absolute', bottom: 20, left: 0, right: 0,
-              textAlign: 'center',
-              fontFamily: 'Anton', fontSize: 36, color: '#FBF5A7',
-              opacity: labelGIn,
-            }}>
-              72%
+            <div
+              style={{
+                fontFamily: 'JetBrains Mono',
+                fontSize: 32,
+                color: '#FE7F2D',
+                fontWeight: 900,
+                marginTop: 4,
+              }}
+            >
+              ₹80/kg
             </div>
           </div>
-          <div style={{
-            marginTop: 16,
-            fontFamily: 'Montserrat', fontSize: 24, color: '#1E2022',
-            fontWeight: 600, letterSpacing: 1, opacity: labelGIn,
-          }}>
-            VALEUR AMPUTÉE
+
+          {/* Onion */}
+          <div
+            style={{
+              opacity: veg2Op,
+              transform: `translateY(${(1 - veg2Op) * 60}px)`,
+              textAlign: 'center',
+            }}
+          >
+            <svg width="160" height="160" viewBox="0 0 160 160">
+              <ellipse cx="80" cy="95" rx="55" ry="50" fill="#B9434F" />
+              <path d="M75 40 L85 40 L90 50 L70 50 Z" fill="#B9F3FC" />
+              <path d="M50 80 Q80 70 110 80" stroke="#1C1C1C" strokeWidth="2" fill="none" opacity="0.4" />
+              <path d="M55 95 Q80 85 105 95" stroke="#1C1C1C" strokeWidth="2" fill="none" opacity="0.4" />
+            </svg>
+            <div style={{ fontFamily: 'Yantra One', fontSize: 38, color: '#B9F3FC', fontWeight: 800, marginTop: 6 }}>
+              प्याज
+            </div>
+            <div
+              style={{
+                fontFamily: 'JetBrains Mono',
+                fontSize: 32,
+                color: '#FE7F2D',
+                fontWeight: 900,
+                marginTop: 4,
+              }}
+            >
+              ₹60/kg
+            </div>
+          </div>
+
+          {/* Dal */}
+          <div
+            style={{
+              opacity: veg3Op,
+              transform: `translateY(${(1 - veg3Op) * 60}px)`,
+              textAlign: 'center',
+            }}
+          >
+            <svg width="160" height="160" viewBox="0 0 160 160">
+              <path d="M30 70 Q80 130 130 70 L125 80 Q80 140 35 80 Z" fill="#FFC107" />
+              <ellipse cx="80" cy="70" rx="50" ry="8" fill="#1C1C1C" opacity="0.4" />
+              <circle cx="65" cy="100" r="6" fill="#B9434F" />
+              <circle cx="85" cy="105" r="6" fill="#B9434F" />
+              <circle cx="100" cy="95" r="6" fill="#B9434F" />
+            </svg>
+            <div style={{ fontFamily: 'Yantra One', fontSize: 38, color: '#B9F3FC', fontWeight: 800, marginTop: 6 }}>
+              दाल
+            </div>
+            <div
+              style={{
+                fontFamily: 'JetBrains Mono',
+                fontSize: 32,
+                color: '#FE7F2D',
+                fontWeight: 900,
+                marginTop: 4,
+              }}
+            >
+              ₹180/kg
+            </div>
           </div>
         </div>
 
-        {/* Gap arrow between */}
-        <div style={{
-          position: 'absolute', left: 290, top: -40,
-          opacity: m2In,
-        }}>
-          <svg width="120" height="600" viewBox="0 0 120 600">
-            <line x1="60" y1="0" x2="60" y2="600" stroke="#1E2022" strokeWidth="3" strokeDasharray="8,8" />
-            <polygon points="50,0 70,0 60,15" fill="#1E2022" />
-            <polygon points="50,600 70,600 60,585" fill="#1E2022" />
+        {/* Down Arrow */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 540,
+            left: 0,
+            right: 0,
+            textAlign: 'center',
+            opacity: arrowOp,
+          }}
+        >
+          <svg width="60" height="60" viewBox="0 0 60 60">
+            <polygon points="15,10 45,10 45,30 55,30 30,55 5,30 15,30" fill="#B9F3FC" />
           </svg>
         </div>
-      </div>
 
-      {/* RIGHT — Big stats */}
-      <div style={{
-        position: 'absolute', top: 320, right: 100, width: 700,
-      }}>
-        {/* 28% */}
-        <div style={{
-          background: '#1E2022',
-          padding: '40px 50px',
-          borderRadius: 16,
-          marginBottom: 30,
-          boxShadow: '0 25px 60px rgba(30,32,34,0.4)',
-          transform: `scale(${interpolate(frame, [200, 240], [0.8, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })})`,
-        }}>
-          <div style={{
-            fontFamily: 'Bricolage Grotesque', fontSize: 24,
-            color: '#FBF5A7', letterSpacing: 3, textTransform: 'uppercase',
-            marginBottom: 8,
-          }}>
-            Écart maximum
-          </div>
-          <div style={{
-            fontFamily: 'Clash Display, sans-serif',
-            fontSize: 200, fontWeight: 900, color: '#F4CE14',
-            lineHeight: 1, letterSpacing: -5,
-          }}>
-            {pct}%
-          </div>
-        </div>
-
-        {/* 1000€/m² */}
-        <div style={{
-          opacity: m2In,
-          transform: `translateY(${(1 - m2In) * 30}px)`,
-          background: 'rgba(30,32,34,0.08)',
-          border: '4px dashed #1E2022',
-          padding: '24px 32px',
-          borderRadius: 12,
-        }}>
-          <div style={{
-            fontFamily: 'Bricolage Grotesque', fontSize: 22,
-            color: '#1E2022', letterSpacing: 2, textTransform: 'uppercase',
-            fontWeight: 600,
-          }}>
-            En zones tendues
-          </div>
-          <div style={{
-            fontFamily: 'Space Mono, monospace',
-            fontSize: 64, fontWeight: 700, color: '#1E2022',
-            lineHeight: 1, marginTop: 4,
-          }}>
-            +{m2.toLocaleString('fr-FR').replace(/,/g, ' ')} € /m²
-          </div>
-          <div style={{
-            fontFamily: 'Montserrat', fontSize: 20, color: '#1E2022',
-            opacity: 0.8, marginTop: 6,
-          }}>
-            qui s'évapore... ou qui se gagne.
-          </div>
-        </div>
-      </div>
-
-      {/* Vignette */}
-      <AbsoluteFill style={{
-        boxShadow: 'inset 0 0 250px rgba(30,32,34,0.4)',
-        pointerEvents: 'none',
-      }} />
-
-      {/* Watermark */}
-      <div style={{
-        position: 'absolute', bottom: 30, right: 45,
-        fontFamily: 'Montserrat, sans-serif',
-        fontSize: 22, fontWeight: 600, color: '#1E2022',
-        opacity: 0.4, letterSpacing: 1,
-      }}>
-        Matures Finance
-      </div>
-    </AbsoluteFill>
-  );
-};
-
-export default Scene07_Ecart28;
-```
-
-```tsx
-import React from 'react';
-
-import { useCurrentFrame, useVideoConfig, interpolate, Easing, spring, AbsoluteFill } from 'remotion';
-
-export const compositionConfig = {
-  id: 'Scene08_OndeDeChoc',
-  durationInSeconds: 18,
-  fps: 30,
-  width: 1920,
-  height: 1080,
-};
-
-const seededRandom = (seed: number): number => {
-  const x = Math.sin(seed * 9999) * 10000;
-  return x - Math.floor(x);
-};
-
-const Scene08_OndeDeChoc: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
-
-  const sp = (delay: number, config?: object) =>
-    spring({ frame: Math.max(0, frame - delay), fps, config: { damping: 12, mass: 0.4, stiffness: 120, ...config } });
-
-  const exitOp = interpolate(frame, [durationInFrames - 15, durationInFrames], [1, 0], {
-    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
-  });
-
-  const titleIn = sp(10);
-  const dateIn = sp(60);
-
-  // Impact at frame ~120
-  const impactFrame = 120;
-  const shakeF = Math.max(0, frame - impactFrame);
-  const shake = shakeF < 25 ? Math.sin(shakeF * 2.5) * (25 - shakeF) * 0.8 : 0;
-
-  // Waves emanating
-  const wave = (delay: number) => {
-    const f = Math.max(0, frame - impactFrame - delay);
-    const scale = interpolate(f, [0, 60], [0, 2.5], { extrapolateRight: 'clamp' });
-    const op = interpolate(f, [0, 30, 60], [0.5, 0.3, 0], { extrapolateRight: 'clamp' });
-    return { scale, op };
-  };
-
-  const w1 = wave(0);
-  const w2 = wave(15);
-  const w3 = wave(30);
-
-  const cardIn = (delay: number) => sp(180 + delay, { damping: 14 });
-
-  return (
-    <AbsoluteFill style={{ backgroundColor: '#F4CE14', overflow: 'hidden', opacity: exitOp }}>
-      {/* Gradient */}
-      <AbsoluteFill style={{
-        background: 'radial-gradient(circle at 50% 45%, rgba(255,0,0,0.12) 0%, transparent 50%)',
-        transform: `translate(${shake}px, ${shake * 0.5}px)`,
-      }} />
-
-      {/* Shapes */}
-      <div style={{
-        position: 'absolute', top: '10%', left: '5%',
-        width: 350, height: 350,
-        background: '#1E2022', opacity: 0.04,
-        transform: `rotate(${frame * 0.2}deg)`,
-        clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)',
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '8%', right: '5%',
-        width: 400, height: 400,
-        border: '3px solid #1E2022', opacity: 0.08,
-        borderRadius: '50%',
-      }} />
-
-      {/* Radial texture */}
-      <svg width="1920" height="1080" style={{ position: 'absolute', opacity: 0.05 }}>
-        <defs>
-          <pattern id="dots8" width="30" height="30" patternUnits="userSpaceOnUse">
-            <circle cx="15" cy="15" r="1.5" fill="#1E2022" />
-          </pattern>
-        </defs>
-        <rect width="1920" height="1080" fill="url(#dots8)" />
-      </svg>
-
-      {/* Particles burst */}
-      {Array.from({ length: 30 }).map((_, i) => {
-        const angle = (i / 30) * Math.PI * 2;
-        const dist = Math.max(0, frame - impactFrame) * 8 + 100;
-        const x = 960 + Math.cos(angle) * dist;
-        const y = 540 + Math.sin(angle) * dist;
-        const op = interpolate(frame, [impactFrame, impactFrame + 80], [0.7, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-        return (
-          <div key={i} style={{
+        {/* Layer 2 — Crude Oil Reveal */}
+        <div
+          style={{
             position: 'absolute',
-            left: x, top: y,
-            width: 8, height: 8, borderRadius: '50%',
-            background: '#1E2022', opacity: op,
-          }} />
-        );
-      })}
-
-      {/* Top title */}
-      <div style={{
-        position: 'absolute', top: 80, left: 100, right: 100,
-        opacity: titleIn,
-        transform: `translateY(${(1 - titleIn) * -20}px) translate(${shake * 0.3}px, 0)`,
-      }}>
-        <div style={{
-          fontFamily: 'Bricolage Grotesque', fontSize: 28,
-          color: '#1E2022', letterSpacing: 4, textTransform: 'uppercase',
-          fontWeight: 600, marginBottom: 12,
-        }}>
-          → Les règles changent
-        </div>
-        <div style={{
-          fontFamily: 'Clash Display', fontSize: 130, fontWeight: 800,
-          color: '#1E2022', lineHeight: 0.95, letterSpacing: -3,
-        }}>
-          ONDE DE CHOC.
-        </div>
-      </div>
-
-      {/* Center impact + waves */}
-      <div style={{
-        position: 'absolute', top: 480, left: '50%', transform: 'translateX(-50%)',
-      }}>
-        {/* Waves */}
-        {[w1, w2, w3].map((w, i) => (
-          <div key={i} style={{
-            position: 'absolute', left: '50%', top: '50%',
-            width: 200, height: 200, borderRadius: '50%',
-            border: '5px solid #ff0000',
-            transform: `translate(-50%, -50%) scale(${w.scale})`,
-            opacity: w.op,
-          }} />
-        ))}
-
-        {/* Center stamp */}
-        <div style={{
-          opacity: dateIn,
-          transform: `scale(${dateIn}) translate(${shake}px, ${shake * 0.3}px)`,
-          background: '#1E2022',
-          padding: '30px 60px',
-          borderRadius: 16,
-          border: '5px solid #ff0000',
-          boxShadow: '0 30px 80px rgba(30,32,34,0.5)',
-          position: 'relative',
-          zIndex: 10,
-        }}>
-          <div style={{
-            fontFamily: 'Bricolage Grotesque', fontSize: 24,
-            color: '#FBF5A7', letterSpacing: 4, textTransform: 'uppercase',
-            textAlign: 'center', marginBottom: 8,
-          }}>
-            Date d'entrée en vigueur
-          </div>
-          <div style={{
-            fontFamily: 'Clash Display, sans-serif',
-            fontSize: 110, fontWeight: 900, color: '#F4CE14',
-            lineHeight: 1, letterSpacing: -2, textAlign: 'center',
-          }}>
-            1er JANVIER 2026
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom cards */}
-      <div style={{
-        position: 'absolute', bottom: 100, left: 100, right: 100,
-        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 30,
-      }}>
-        {[
-          { num: '01', title: 'DPE COLLECTIF', sub: 'Élargi à tous les immeubles' },
-          { num: '02', title: 'INTERDICTION G', sub: 'Location bloquée' },
-          { num: '03', title: 'NOUVEAU CALCUL', sub: 'Coefficient revu' },
-        ].map((c, i) => {
-          const cIn = cardIn(i * 25);
-          return (
-            <div key={i} style={{
-              opacity: cIn,
-              transform: `translateY(${(1 - cIn) * 40}px)`,
-              background: i === 1 ? '#1E2022' : '#FBF5A7',
-              color: i === 1 ? '#FBF5A7' : '#1E2022',
-              padding: '24px 28px',
-              border: '4px solid #1E2022',
-              borderRadius: 12,
-            }}>
-              <div style={{
-                fontFamily: 'Space Mono', fontSize: 28, fontWeight: 700,
-                letterSpacing: 2, marginBottom: 10, opacity: 0.6,
-              }}>
-                {c.num}
-              </div>
-              <div style={{
-                fontFamily: 'Anton', fontSize: 40, lineHeight: 1,
-                letterSpacing: 1,
-              }}>
-                {c.title}
-              </div>
-              <div style={{
-                fontFamily: 'Montserrat', fontSize: 22, fontWeight: 500,
-                marginTop: 8, opacity: 0.85,
-              }}>
-                {c.sub}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Vignette */}
-      <AbsoluteFill style={{
-        boxShadow: 'inset 0 0 250px rgba(30,32,34,0.4)',
-        pointerEvents: 'none',
-      }} />
-
-      {/* Watermark */}
-      <div style={{
-        position: 'absolute', bottom: 30, right: 45,
-        fontFamily: 'Montserrat, sans-serif',
-        fontSize: 22, fontWeight: 600, color: '#1E2022',
-        opacity: 0.4, letterSpacing: 1,
-      }}>
-        Matures Finance
-      </div>
-    </AbsoluteFill>
-  );
-};
-
-export default Scene08_OndeDeChoc;
-```
-
-```tsx
-import React from 'react';
-
-import { useCurrentFrame, useVideoConfig, interpolate, Easing, spring, AbsoluteFill } from 'remotion';
-
-export const compositionConfig = {
-  id: 'Scene09_11Millions',
-  durationInSeconds: 18,
-  fps: 30,
-  width: 1920,
-  height: 1080,
-};
-
-const seededRandom = (seed: number): number => {
-  const x = Math.sin(seed * 9999) * 10000;
-  return x - Math.floor(x);
-};
-
-const Scene09_11Millions: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
-
-  const sp = (delay: number, config?: object) =>
-    spring({ frame: Math.max(0, frame - delay), fps, config: { damping: 12, mass: 0.4, stiffness: 120, ...config } });
-
-  const exitOp = interpolate(frame, [durationInFrames - 15, durationInFrames], [1, 0], {
-    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
-  });
-
-  const titleIn = sp(10);
-  const subIn = sp(50);
-
-  const buildingsIn = (i: number) => sp(80 + i * 12, { damping: 13 });
-
-  const millionRaw = interpolate(frame, [220, 360], [0, 11], { extrapolateRight: 'clamp' });
-  const million = millionRaw.toFixed(1);
-
-  const stampIn = sp(220, { damping: 8, stiffness: 110 });
-
-  return (
-    <AbsoluteFill style={{ backgroundColor: '#F4CE14', overflow: 'hidden', opacity: exitOp }}>
-      {/* Gradient */}
-      <AbsoluteFill style={{
-        background: 'linear-gradient(0deg, rgba(244,206,20,1) 0%, rgba(251,245,167,0.5) 80%)',
-      }} />
-
-      {/* Shapes */}
-      <div style={{
-        position: 'absolute', top: '-5%', left: '40%',
-        width: 400, height: 400,
-        background: '#1E2022', opacity: 0.04,
-        transform: `rotate(${frame * 0.18}deg)`,
-        clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '5%', right: '-5%',
-        width: 350, height: 350, borderRadius: '50%',
-        background: '#1E2022', opacity: 0.05,
-      }} />
-
-      {/* Grid */}
-      <svg width="1920" height="1080" style={{ position: 'absolute', opacity: 0.07 }}>
-        <defs>
-          <pattern id="grid9" width="60" height="60" patternUnits="userSpaceOnUse">
-            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#1E2022" strokeWidth="1" />
-          </pattern>
-        </defs>
-        <rect width="1920" height="1080" fill="url(#grid9)" />
-      </svg>
-
-      {/* Particles */}
-      {Array.from({ length: 18 }).map((_, i) => {
-        const x = seededRandom(i + 41) * 1920;
-        const y = seededRandom(i + 150) * 1080;
-        return (
-          <div key={i} style={{
-            position: 'absolute',
-            left: x + Math.sin((frame + i * 22) * 0.022) * 22,
-            top: y + Math.cos((frame + i * 16) * 0.022) * 20,
-            width: 5, height: 5, borderRadius: '50%',
-            background: '#1E2022', opacity: 0.3,
-          }} />
-        );
-      })}
-
-      {/* Title */}
-      <div style={{
-        position: 'absolute', top: 70, left: 100, right: 100,
-        opacity: titleIn,
-        transform: `translateY(${(1 - titleIn) * -25}px)`,
-      }}>
-        <div style={{
-          fontFamily: 'Bricolage Grotesque', fontSize: 26,
-          color: '#1E2022', letterSpacing: 4, textTransform: 'uppercase',
-          fontWeight: 600, marginBottom: 8,
-        }}>
-          → DPE collectif élargi
-        </div>
-        <div style={{
-          fontFamily: 'Clash Display', fontSize: 110, fontWeight: 800,
-          color: '#1E2022', lineHeight: 0.95, letterSpacing: -3,
-        }}>
-          Tous les immeubles <span style={{ background: '#1E2022', color: '#F4CE14', padding: '0 18px' }}>{'< 50'}</span>
-        </div>
-        <div style={{
-          fontFamily: 'Clash Display', fontSize: 110, fontWeight: 800,
-          color: '#1E2022', lineHeight: 0.95, letterSpacing: -3, marginTop: 6,
-        }}>
-          logements concernés.
-        </div>
-      </div>
-
-      {/* LEFT — Buildings array */}
-      <div style={{
-        position: 'absolute', bottom: 120, left: 100,
-        display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 14,
-        width: 700,
-      }}>
-        {Array.from({ length: 18 }).map((_, i) => {
-          const bIn = buildingsIn(i);
-          const h = 100 + (i % 4) * 30;
-          return (
-            <div key={i} style={{
-              opacity: bIn,
-              transform: `translateY(${(1 - bIn) * 40}px)`,
-            }}>
-              <svg width="90" height={h + 30} viewBox={`0 0 90 ${h + 30}`}>
-                <rect x="10" y="20" width="70" height={h} fill="#1E2022" />
-                {/* windows */}
-                {Array.from({ length: Math.floor(h / 25) }).map((_, r) => (
-                  <React.Fragment key={r}>
-                    <rect x="18" y={28 + r * 25} width="14" height="14" fill="#FBF5A7" />
-                    <rect x="38" y={28 + r * 25} width="14" height="14" fill="#FBF5A7" />
-                    <rect x="58" y={28 + r * 25} width="14" height="14" fill="#FBF5A7" />
-                  </React.Fragment>
-                ))}
-                <polygon points="5,20 85,20 45,5" fill="#1E2022" />
+            bottom: 80,
+            left: 0,
+            right: 0,
+            textAlign: 'center',
+            opacity: layer2Op,
+            transform: `translateY(${(1 - layer2Op) * 80}px)`,
+          }}
+        >
+          <div
+            style={{
+              display: 'inline-block',
+              backgroundColor: '#1C1C1C',
+              padding: '24px 50px',
+              borderRadius: 14,
+              border: '4px solid #FE7F2D',
+              boxShadow: '0 0 50px rgba(254, 127, 45, 0.4)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 30,
+            }}
+          >
+            {/* Crude oil drop icon */}
+            <div style={{ opacity: crudeIconOp, transform: `scale(${crudeIconOp})` }}>
+              <svg width="100" height="120" viewBox="0 0 100 120">
+                <path
+                  d="M50 10 Q20 50 20 80 Q20 110 50 110 Q80 110 80 80 Q80 50 50 10 Z"
+                  fill="#1C1C1C"
+                  stroke="#FE7F2D"
+                  strokeWidth="4"
+                />
+                <ellipse cx="40" cy="70" rx="8" ry="14" fill="#FE7F2D" opacity="0.6" />
               </svg>
             </div>
-          );
-        })}
-      </div>
-
-      {/* RIGHT — 11 Million stamp */}
-      <div style={{
-        position: 'absolute', bottom: 200, right: 100, width: 720,
-        opacity: stampIn,
-        transform: `scale(${stampIn})`,
-      }}>
-        <div style={{
-          background: '#1E2022',
-          padding: '50px 60px',
-          borderRadius: 20,
-          border: '6px solid #FBF5A7',
-          boxShadow: '0 30px 80px rgba(30,32,34,0.5)',
-        }}>
-          <div style={{
-            fontFamily: 'Bricolage Grotesque', fontSize: 26,
-            color: '#FBF5A7', letterSpacing: 3, textTransform: 'uppercase',
-            marginBottom: 10,
-          }}>
-            Appartements supplémentaires
-          </div>
-          <div style={{
-            fontFamily: 'Clash Display, sans-serif',
-            fontSize: 220, fontWeight: 900, color: '#F4CE14',
-            lineHeight: 1, letterSpacing: -5,
-          }}>
-            {million}M
-          </div>
-          <div style={{
-            fontFamily: 'Anton, sans-serif',
-            fontSize: 44, color: '#FBF5A7',
-            letterSpacing: 2, marginTop: -8,
-          }}>
-            ENTRENT DANS LE CHAMP
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontFamily: 'Inter', fontSize: 26, color: '#B9F3FC', letterSpacing: 4, fontWeight: 700 }}>
+                LAYER 02 INCOMING
+              </div>
+              <div
+                style={{
+                  fontFamily: 'Yantra One',
+                  fontSize: 80,
+                  color: '#FE7F2D',
+                  fontWeight: 900,
+                  lineHeight: 1,
+                  marginTop: 4,
+                }}
+              >
+                CRUDE OIL
+              </div>
+              <div style={{ fontFamily: 'Noto Sans Devanagari', fontSize: 32, color: '#F5F5F5', fontWeight: 700 }}>
+                कच्चा तेल · दूसरी परत
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Sticker */}
-        <div style={{
-          position: 'absolute', top: -30, right: -30,
-          background: '#ff0000', color: '#FBF5A7',
-          fontFamily: 'Anton', fontSize: 28,
-          padding: '12px 24px', letterSpacing: 2,
-          transform: 'rotate(8deg)',
-          border: '3px solid #1E2022',
-        }}>
-          OBLIGATION
-        </div>
-      </div>
+      </AbsoluteFill>
 
       {/* Vignette */}
-      <AbsoluteFill style={{
-        boxShadow: 'inset 0 0 250px rgba(30,32,34,0.4)',
-        pointerEvents: 'none',
-      }} />
+      <AbsoluteFill
+        style={{
+          background: 'radial-gradient(circle at center, transparent 45%, rgba(0,0,0,0.6) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
 
       {/* Watermark */}
-      <div style={{
-        position: 'absolute', bottom: 30, right: 45,
-        fontFamily: 'Montserrat, sans-serif',
-        fontSize: 22, fontWeight: 600, color: '#1E2022',
-        opacity: 0.4, letterSpacing: 1,
-      }}>
-        Matures Finance
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 30,
+          right: 45,
+          fontFamily: 'Inter',
+          fontSize: 22,
+          fontWeight: 600,
+          color: '#9E9E9E',
+          opacity: 0.3,
+        }}
+      >
+        ProBuffet HQ
       </div>
     </AbsoluteFill>
   );
 };
 
-export default Scene09_11Millions;
-```
-
-```tsx
-import React from 'react';
-
-import { useCurrentFrame, useVideoConfig, interpolate, Easing, spring, AbsoluteFill } from 'remotion';
-
-export const compositionConfig = {
-  id: 'Scene10_DerriereDiagnostic',
-  durationInSeconds: 18,
-  fps: 30,
-  width: 1920,
-  height: 1080,
-};
-
-const seededRandom = (seed: number): number => {
-  const x = Math.sin(seed * 9999) * 10000;
-  return x - Math.floor(x);
-};
-
-const Scene10_DerriereDiagnostic: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
-
-  const sp = (delay: number, config?: object) =>
-    spring({ frame: Math.max(0, frame - delay), fps, config: { damping: 12, mass: 0.4, stiffness: 120, ...config } });
-
-  const exitOp = interpolate(frame, [durationInFrames - 15, durationInFrames], [1, 0], {
-    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
-  });
-
-  const titleIn = sp(10);
-  const subIn = sp(50);
-
-  const cardIn = (i: number) => sp(100 + i * 30, { damping: 13 });
-
-  // Rising chart bars
-  const barH = (i: number) => interpolate(frame, [220 + i * 10, 320 + i * 10], [0, 60 + i * 25], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
-
-  const punchIn = sp(380, { damping: 8, stiffness: 110 });
-
-  return (
-    <AbsoluteFill style={{ backgroundColor: '#F4CE14', overflow: 'hidden', opacity: exitOp }}>
-      {/* Gradient */}
-      <AbsoluteFill style={{
-        background: 'radial-gradient(ellipse at 20% 80%, rgba(251,245,167,0.6) 0%, transparent 60%)',
-      }} />
-
-      {/* Shapes */}
-      <div style={{
-        position: 'absolute', top: '5%', right: '10%',
-        width: 320, height: 320, borderRadius: '50%',
-        background: '#1E2022', opacity: 0.05,
-        transform: `scale(${1 + Math.sin(frame * 0.04) * 0.05})`,
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '-8%', left: '-5%',
-        width: 500, height: 500,
-        background: '#1E2022', opacity: 0.04,
-        transform: `rotate(${-frame * 0.15}deg)`,
-        clipPath: 'polygon(0% 0%, 100% 0%, 50% 100%)',
-      }} />
-
-      {/* Dot texture */}
-      <svg width="1920" height="1080" style={{ position: 'absolute', opacity: 0.08 }}>
-        <defs>
-          <pattern id="dots10" width="40" height="40" patternUnits="userSpaceOnUse">
-            <circle cx="20" cy="20" r="2" fill="#1E2022" />
-          </pattern>
-        </defs>
-        <rect width="1920" height="1080" fill="url(#dots10)" />
-      </svg>
-
-      {/* Particles */}
-      {Array.from({ length: 16 }).map((_, i) => {
-        const x = seededRandom(i + 51) * 1920;
-        const y = seededRandom(i + 170) * 1080;
-        return (
-          <div key={i} style={{
-            position: 'absolute',
-            left: x + Math.sin((frame + i * 25) * 0.023) * 22,
-            top: y + Math.cos((frame + i * 19) * 0.023) * 20,
-            width: 5, height: 5, borderRadius: '50%',
-            background: '#1E2022', opacity: 0.3,
-          }} />
-        );
-      })}
-
-      {/* Title */}
-      <div style={{
-        position: 'absolute', top: 70, left: 100, right: 100,
-        opacity: titleIn,
-        transform: `translateY(${(1 - titleIn) * -20}px)`,
-      }}>
-        <div style={{
-          fontFamily: 'Bricolage Grotesque', fontSize: 26,
-          color: '#1E2022', letterSpacing: 4, textTransform: 'uppercase',
-          fontWeight: 600, marginBottom: 8,
-        }}>
-          → Derrière le diagnostic
-        </div>
-        <div style={{
-          fontFamily: 'Clash Display', fontSize: 110, fontWeight: 800,
-          color: '#1E2022', lineHeight: 0.95, letterSpacing: -3,
-        }}>
-          Ce qui pèse sur
-        </div>
-        <div style={{
-          fontFamily: 'Clash Display', fontSize: 110, fontWeight: 800,
-          lineHeight: 0.95, letterSpacing: -3,
-          marginTop: 6,
-        }}>
-          votre <span style={{ background: '#1E2022', color: '#F4CE14', padding: '0 18px' }}>portefeuille</span>.
-        </div>
-      </div>
-
-      {/* 3 Cards */}
-      <div style={{
-        position: 'absolute', top: 480, left: 100, right: 800,
-        display: 'flex', flexDirection: 'column', gap: 18,
-      }}>
-        {[
-          { icon: 'vote', title: 'TRAVAUX À VOTER', sub: 'En assemblée générale' },
-          { icon: 'chart', title: 'CHARGES QUI GRIMPENT', sub: 'Mois après mois' },
-          { icon: 'plan', title: 'PLAN PLURIANNUEL', sub: 'Rénovation imposée' },
-        ].map((c, i) => {
-          const cIn = cardIn(i);
-          return (
-            <div key={i} style={{
-              opacity: cIn,
-              transform: `translateX(${(1 - cIn) * -50}px)`,
-              display: 'flex', alignItems: 'center', gap: 24,
-              background: i === 1 ? '#1E2022' : '#FBF5A7',
-              color: i === 1 ? '#FBF5A7' : '#1E2022',
-              padding: '20px 28px',
-              border: '4px solid #1E2022',
-              borderRadius: 12,
-            }}>
-              <div style={{
-                width: 70, height: 70, borderRadius: 8,
-                background: i === 1 ? '#F4CE14' : '#1E2022',
-                color: i === 1 ? '#1E2022' : '#F4CE14',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0,
-              }}>
-                {c.icon === 'vote' && (
-                  <svg width="42" height="42" viewBox="0 0 42 42">
-                    <rect x="6" y="10" width="30" height="22" fill="none" stroke="currentColor" strokeWidth="3" />
-                    <path d="M 12 21 L 18 27 L 30 14" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-                {c.icon === 'chart' && (
-                  <svg width="42" height="42" viewBox="0 0 42 42">
-                    <polyline points="6,34 14,24 22,28 30,12 36,16" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                    <polyline points="30,12 36,12 36,18" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
-                  </svg>
-                )}
-                {c.icon === 'plan' && (
-                  <svg width="42" height="42" viewBox="0 0 42 42">
-                    <rect x="8" y="6" width="26" height="30" fill="none" stroke="currentColor" strokeWidth="3" />
-                    <line x1="13" y1="14" x2="29" y2="14" stroke="currentColor" strokeWidth="2.5" />
-                    <line x1="13" y1="21" x2="29" y2="21" stroke="currentColor" strokeWidth="2.5" />
-                    <line x1="13" y1="28" x2="22" y2="28" stroke="currentColor" strokeWidth="2.5" />
-                  </svg>
-                )}
-              </div>
-              <div>
-                <div style={{
-                  fontFamily: 'Anton', fontSize: 38, lineHeight: 1,
-                  letterSpacing: 1,
-                }}>
-                  {c.title}
-                </div>
-                <div style={{
-                  fontFamily: 'Montserrat', fontSize: 22, fontWeight: 500,
-                  marginTop: 4, opacity: 0.85,
-                }}>
-                  {c.sub}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* RIGHT — Rising bar chart */}
-      <div style={{
-        position: 'absolute', top: 480, right: 120, width: 600,
-      }}>
-        <div style={{
-          fontFamily: 'Bricolage Grotesque', fontSize: 22,
-          color: '#1E2022', letterSpacing: 3, textTransform: 'uppercase',
-          fontWeight: 600, marginBottom: 18,
-        }}>
-          Évolution des charges
-        </div>
-        <div style={{
-          background: 'rgba(30,32,34,0.06)',
-          border: '3px solid #1E2022',
-          padding: '30px 26px',
-          borderRadius: 12,
-          height: 320,
-          display: 'flex', alignItems: 'flex-end', gap: 14,
-        }}>
-          {['2024', '2025', '2026', '2027', '2028'].map((y, i) => (
-            <div key={i} style={{
-              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-            }}>
-              <div style={{
-                width: '100%',
-                height: barH(i),
-                background: i >= 2 ? '#ff0000' : '#1E2022',
-                border: '2px solid #1E2022',
-                transition: 'height 0.3s',
-              }} />
-              <div style={{
-                marginTop: 8,
-                fontFamily: 'Space Mono', fontSize: 20, fontWeight: 700,
-                color: '#1E2022',
-              }}>
-                {y}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Punch */}
-        <div style={{
-          marginTop: 30,
-          opacity: punchIn,
-          transform: `scale(${punchIn})`,
-          background: '#ff0000', color: '#FBF5A7',
-          padding: '18px 28px',
-          border: '4px solid #1E2022',
-          fontFamily: 'Anton', fontSize: 42,
-          letterSpacing: 1, textAlign: 'center', lineHeight: 1.1,
-        }}>
-          PAS UN DÉTAIL DE SYNDIC.
-        </div>
-      </div>
-
-      {/* Vignette */}
-      <AbsoluteFill style={{
-        boxShadow: 'inset 0 0 250px rgba(30,32,34,0.4)',
-        pointerEvents: 'none',
-      }} />
-
-      {/* Watermark */}
-      <div style={{
-        position: 'absolute', bottom: 30, right: 45,
-        fontFamily: 'Montserrat, sans-serif',
-        fontSize: 22, fontWeight: 600, color: '#1E2022',
-        opacity: 0.4, letterSpacing: 1,
-      }}>
-        Matures Finance
-      </div>
-    </AbsoluteFill>
-  );
-};
-
-export default Scene10_DerriereDiagnostic;
+export default Scene10_CrudeReveal;
 ```
 
